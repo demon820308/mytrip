@@ -7,7 +7,7 @@ export async function onRequest(context) {
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
@@ -39,6 +39,19 @@ export async function onRequest(context) {
         .bind(from_st, to_st, date ?? null, dep_time ?? null, train_no ?? null, price ?? null, note ?? null, sort_order ?? 0)
         .run();
       return json({ id: result.meta.last_row_id }, 201);
+    }
+
+    if (request.method === 'PUT') {
+      const body = await request.json();
+      const { id, from_st, to_st, date, dep_time, train_no, price, note } = body;
+      if (!id) return json({ error: 'id required' }, 400);
+      await db
+        .prepare(
+          'UPDATE trip_segments SET from_st = ?, to_st = ?, date = ?, dep_time = ?, train_no = ?, price = ?, note = ? WHERE id = ?'
+        )
+        .bind(from_st, to_st, date ?? null, dep_time ?? null, train_no ?? null, price ?? null, note ?? null, id)
+        .run();
+      return json({ ok: true });
     }
 
     if (request.method === 'DELETE') {

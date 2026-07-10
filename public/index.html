@@ -262,6 +262,8 @@
     let currentTab = 'eat';
     let currentCity = '全部';
     let segments = [];
+    let editingId = null;
+    let editingIndex = null;
 
     // Elements
     const cityFilters = document.getElementById('city-filters');
@@ -530,6 +532,9 @@
               <a href="${scheduleSearchUrl}" target="_blank" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
                 <i class="fa-solid fa-calendar-days"></i> 时刻表
               </a>
+              <button class="btn-icon" onclick="startEditSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})" style="color: var(--primary);">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
               <button class="btn-icon" onclick="deleteSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
@@ -560,22 +565,46 @@
         dep_time,
         train_no,
         price,
-        note,
-        sort_order: segments.length + 1
+        note
       };
 
-      try {
-        // Try D1 API POST
-        const res = await fetch('/api/segments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newSegment)
-        });
-        if (!res.ok) throw new Error('API post failed');
-      } catch (err) {
-        console.warn('API post failed, saving to LocalStorage instead.');
-        segments.push(newSegment);
-        localStorage.setItem('gdx_segments', JSON.stringify(segments));
+      if (editingId !== null || editingIndex !== null) {
+        // Edit mode
+        if (editingId !== null) {
+          newSegment.id = editingId;
+          try {
+            const res = await fetch('/api/segments', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newSegment)
+            });
+            if (!res.ok) throw new Error('API update failed');
+          } catch (err) {
+            console.error(err);
+          }
+        } else {
+          // Local edit
+          newSegment.sort_order = segments[editingIndex].sort_order;
+          segments[editingIndex] = newSegment;
+          localStorage.setItem('gdx_segments', JSON.stringify(segments));
+        }
+        cancelEdit();
+      } else {
+        // Add mode
+        newSegment.sort_order = segments.length + 1;
+        try {
+          // Try D1 API POST
+          const res = await fetch('/api/segments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newSegment)
+          });
+          if (!res.ok) throw new Error('API post failed');
+        } catch (err) {
+          console.warn('API post failed, saving to LocalStorage instead.');
+          segments.push(newSegment);
+          localStorage.setItem('gdx_segments', JSON.stringify(segments));
+        }
       }
 
       transportForm.reset();
@@ -596,6 +625,68 @@
         localStorage.setItem('gdx_segments', JSON.stringify(segments));
       }
       await loadSegments();
+    }
+
+    // Start editing segment
+    function startEditSegment(idOrIndex, isRemote) {
+      let seg;
+      if (isRemote) {
+        seg = segments.find(s => s.id === idOrIndex);
+        editingId = idOrIndex;
+        editingIndex = null;
+      } else {
+        seg = segments[idOrIndex];
+        editingIndex = idOrIndex;
+        editingId = null;
+      }
+      
+      if (!seg) return;
+      
+      // Populate form
+      document.getElementById('from-st').value = seg.from_st;
+      document.getElementById('to-st').value = seg.to_st;
+      document.getElementById('dep-date').value = seg.date || '';
+      document.getElementById('dep-time').value = seg.dep_time || '';
+      document.getElementById('train-no').value = seg.train_no || '';
+      document.getElementById('price').value = seg.price || '';
+      document.getElementById('note').value = seg.note || '';
+      
+      // Change form display
+      const formCard = document.querySelector('.form-card');
+      formCard.querySelector('.form-title').innerHTML = `<i class="fa-solid fa-pencil"></i> 编辑车次`;
+      const submitBtn = formCard.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> 保存修改`;
+      
+      // Add a cancel button if not already present
+      if (!document.getElementById('btn-cancel-edit')) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.id = 'btn-cancel-edit';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.style.marginTop = '10px';
+        cancelBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> 取消编辑`;
+        cancelBtn.addEventListener('click', cancelEdit);
+        formCard.querySelector('form').appendChild(cancelBtn);
+      }
+      
+      // Scroll to form on mobile
+      formCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Cancel editing
+    function cancelEdit() {
+      editingId = null;
+      editingIndex = null;
+      
+      const formCard = document.querySelector('.form-card');
+      formCard.querySelector('.form-title').innerHTML = `<i class="fa-solid fa-plus-circle"></i> 添加自定义车次`;
+      const submitBtn = formCard.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 添加行程`;
+      
+      const cancelBtn = document.getElementById('btn-cancel-edit');
+      if (cancelBtn) cancelBtn.remove();
+      
+      document.getElementById('transport-form').reset();
     }
 
     // Reset default DB content
