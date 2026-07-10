@@ -692,8 +692,8 @@
         }
 
         container.innerHTML = `
-          <div style="position: relative; width: 100%;">
-            <img src="${stayImg}" alt="${item.city}" style="width:100%; height:250px; object-fit:cover; display: block;" loading="lazy">
+          <div style="position: relative; width: 100%; height: 100%;">
+            <img src="${stayImg}" alt="${item.city}" style="width:100%; height:100%; min-height: 250px; object-fit:cover; display: block;" loading="lazy">
             <div style="position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: white; padding: 6px 14px; border-radius: 6px; font-weight: bold; font-size: 1.05rem; backdrop-filter: blur(4px); display: flex; align-items: center; gap: 6px; z-index: 2; border: 1px solid rgba(255,255,255,0.2);">
               <i class="fa-solid fa-location-dot"></i> ${item.city}
             </div>
