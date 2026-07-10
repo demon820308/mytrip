@@ -360,7 +360,7 @@
               ${item.name}
               ${item.isSpecial ? '<span class="card-tag">生腌专题</span>' : ''}
             </h4>
-            <a href="https://uri.amap.com/marker?name=${encodeURIComponent(item.name)}&address=${encodeURIComponent(item.address)}" target="_blank" class="card-address">
+            <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(item.city + ' ' + item.name)}" target="_blank" class="card-address">
               <i class="fa-solid fa-location-dot"></i>
               <span>${item.address}</span>
             </a>
@@ -402,7 +402,7 @@
           </div>
           <div class="card-content">
             <h4 class="card-title">${item.name}</h4>
-            <a href="https://uri.amap.com/marker?name=${encodeURIComponent(item.name)}&address=${encodeURIComponent(item.address)}" target="_blank" class="card-address">
+            <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(item.city + ' ' + item.name)}" target="_blank" class="card-address">
               <i class="fa-solid fa-map-pin"></i>
               <span>${item.address}</span>
             </a>
