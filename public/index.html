@@ -100,6 +100,10 @@
               <input type="text" id="to-st" class="form-input" placeholder="例如：广州南" required>
             </div>
             <div class="form-group">
+              <label class="form-label">出发日期</label>
+              <input type="date" id="dep-date" class="form-input" required>
+            </div>
+            <div class="form-group">
               <label class="form-label">出发时间</label>
               <input type="time" id="dep-time" class="form-input" required>
             </div>
@@ -238,10 +242,10 @@
     ];
 
     const DEFAULT_SEGMENTS = [
-      { from_st: '都匀东', to_st: '广州南', dep_time: '09:24', train_no: 'G3701', price: 318, note: '贵州出发高效中转车次', sort_order: 1 },
-      { from_st: '广州南', to_st: '潮汕', dep_time: '14:30', train_no: 'G6313', price: 228, note: '粤东大枢纽，可达潮/汕/揭', sort_order: 2 },
-      { from_st: '潮汕', to_st: '三明北', dep_time: '18:10', train_no: 'D2329', price: 165, note: '潮汕直达三明北备选', sort_order: 3 },
-      { from_st: '饶平', to_st: '三明', dep_time: '08:45', train_no: 'D2312', price: 172, note: '闽粤边界车站直达三明备选', sort_order: 4 }
+      { from_st: '都匀东', to_st: '广州南', date: '2026-07-11', dep_time: '09:24', train_no: 'G3701', price: 318, note: '贵州出发高效中转车次', sort_order: 1 },
+      { from_st: '广州南', to_st: '潮汕', date: '2026-07-11', dep_time: '14:30', train_no: 'G6313', price: 228, note: '粤东大枢纽，可达潮/汕/揭', sort_order: 2 },
+      { from_st: '潮汕', to_st: '三明北', date: '2026-07-12', dep_time: '18:10', train_no: 'D2329', price: 165, note: '潮汕直达三明北备选', sort_order: 3 },
+      { from_st: '饶平', to_st: '三明', date: '2026-07-12', dep_time: '08:45', train_no: 'D2312', price: 172, note: '闽粤边界车站直达三明备选', sort_order: 4 }
     ];
 
     // Image mapping config (Premium banner image replacement based on cards)
@@ -515,7 +519,8 @@
                   <span>${seg.to_st}</span>
                 </div>
                 <div class="station-time">
-                  <i class="fa-solid fa-clock"></i> 发车时间：${seg.dep_time || '--:--'}
+                  <i class="fa-solid fa-calendar-days"></i> ${seg.date || '未设日期'}
+                  <i class="fa-solid fa-clock" style="margin-left: 10px;"></i> ${seg.dep_time || '--:--'}
                   ${seg.note ? ` | <span style="color: var(--primary);">${seg.note}</span>` : ''}
                 </div>
               </div>
@@ -542,6 +547,7 @@
       e.preventDefault();
       const from_st = document.getElementById('from-st').value.trim();
       const to_st = document.getElementById('to-st').value.trim();
+      const date = document.getElementById('dep-date').value;
       const dep_time = document.getElementById('dep-time').value;
       const train_no = document.getElementById('train-no').value.trim().toUpperCase();
       const price = parseFloat(document.getElementById('price').value) || 0;
@@ -550,6 +556,7 @@
       const newSegment = {
         from_st,
         to_st,
+        date,
         dep_time,
         train_no,
         price,
@@ -613,7 +620,7 @@
     function copyItineraryText() {
       let text = "🚄 联名自助行程交通规划概要：\n\n";
       segments.forEach(seg => {
-        text += `${seg.from_st.padEnd(6, ' ')} -  ${seg.to_st.padEnd(6, ' ')}  ${seg.dep_time}  ${(seg.train_no || '火车').padEnd(7, ' ')}  ${seg.price}元`;
+        text += `${seg.date || '无日期'}  ${seg.from_st.padEnd(6, ' ')} -  ${seg.to_st.padEnd(6, ' ')}  ${seg.dep_time}  ${(seg.train_no || '火车').padEnd(7, ' ')}  ${seg.price}元`;
         if (seg.note) text += ` (${seg.note})`;
         text += "\n";
       });
