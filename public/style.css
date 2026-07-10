@@ -725,3 +725,27 @@ body {
 .d-none {
   display: none !important;
 }
+
+/* Mobile Transport Form Modal Styles */
+@media (max-width: 900px) {
+  #transport-form-wrapper.modal-active {
+    display: flex !important;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  #transport-form-wrapper:not(.modal-active) {
+    display: none !important;
+  }
+  .mobile-add-btn-container {
+    display: flex !important;
+  }
+  .mobile-cancel-btn {
+    display: inline-flex !important;
+  }
+}
