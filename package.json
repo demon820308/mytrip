@@ -1,0 +1,11 @@
+{
+  "name": "gdx-travel",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1=DB",
+    "deploy": "wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
