@@ -273,6 +273,13 @@ body {
   align-items: flex-start;
   gap: 6px;
   margin-bottom: 12px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.card-address:hover {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
 .card-address i {
