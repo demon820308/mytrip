@@ -409,7 +409,7 @@
       renderEatTab();
       renderPlayTab();
       renderStayTab();
-      renderGlobalHotels();
+      loadHotels();
       initTabs();
       loadSegments();
       
@@ -607,7 +607,31 @@
     }
 
     // Hotel Booking Logic
-    let bookedHotels = JSON.parse(localStorage.getItem('gdx_booked_hotels')) || [];
+    let bookedHotels = [];
+
+    async function loadHotels() {
+      try {
+        const res = await fetch('/api/hotels');
+        if (!res.ok) throw new Error('API fetch failed');
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Data is not an array');
+        bookedHotels = data;
+      } catch (e) {
+        console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
+        const local = localStorage.getItem('gdx_booked_hotels');
+        if (local) {
+          bookedHotels = JSON.parse(local);
+        } else {
+          bookedHotels = [];
+        }
+      }
+      // Ensure all hotels have a unique ID
+      bookedHotels.forEach(h => {
+        if (!h.id) h.id = Date.now() + Math.random();
+      });
+      renderGlobalHotels();
+      renderStayTab();
+    }
 
     function renderGlobalHotels() {
       const panel = document.getElementById('global-hotel-panel');
@@ -621,7 +645,7 @@
       
       panel.classList.remove('d-none');
       
-      bookedHotels.forEach((hotel, index) => {
+      bookedHotels.forEach((hotel) => {
         const div = document.createElement('div');
         div.className = 'timeline-item';
         div.innerHTML = `
@@ -633,7 +657,7 @@
                 <span class="price-tag" style="font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; background: rgba(204, 120, 92, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; display: inline-block;">¥${hotel.price}</span>
                 <span style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-regular fa-calendar" style="color: var(--primary);"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
               </div>
-              <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
+              <button class="icon-btn" onclick="deleteHotel(${hotel.id})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -663,7 +687,6 @@
           hotelsHtml += '<div style="margin-top: 20px; border-top: 1px dashed var(--panel-border); padding-top: 15px;">';
           hotelsHtml += '<h4 style="margin-bottom: 10px; font-size: 0.95rem; color: var(--text-primary);">我的预订</h4>';
           cityHotels.forEach(hotel => {
-            const index = bookedHotels.indexOf(hotel);
             hotelsHtml += `
               <div class="timeline-item" style="padding-bottom: 15px;">
                 <div class="timeline-dot" style="background: var(--primary);"></div>
@@ -674,7 +697,7 @@
                       <span class="price-tag" style="font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; background: rgba(204, 120, 92, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; display: inline-block;">¥${hotel.price}</span>
                       <span style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-regular fa-calendar" style="color: var(--primary);"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
                     </div>
-                    <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
+                    <button class="icon-btn" onclick="deleteHotel(${hotel.id})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
                       <i class="fa-solid fa-trash-can"></i>
                     </button>
                   </div>
@@ -729,18 +752,32 @@
       document.getElementById('add-hotel-modal').classList.add('d-none');
     }
 
-    function handleAddHotel(e) {
+    async function handleAddHotel(e) {
       e.preventDefault();
       const city = document.getElementById('hotel-city').value;
       const name = document.getElementById('hotel-name').value;
       const checkin = document.getElementById('hotel-checkin').value;
       const checkout = document.getElementById('hotel-checkout').value;
       const address = document.getElementById('hotel-address').value;
-      const price = document.getElementById('hotel-price').value;
+      const price = Number(document.getElementById('hotel-price').value);
 
-      bookedHotels.push({ city, name, checkin, checkout, address, price });
+      const hotelData = { city, name, checkin, checkout, address, price };
+
+      try {
+        const res = await fetch('/api/hotels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(hotelData)
+        });
+        if (!res.ok) throw new Error('API save failed');
+        const newHotel = await res.json();
+        bookedHotels.push({ id: newHotel.id, ...hotelData });
+      } catch (e) {
+        console.warn('D1 database error, saving to LocalStorage fallback:', e.message);
+        bookedHotels.push({ id: Date.now() + Math.random(), ...hotelData });
+      }
+
       bookedHotels.sort((a, b) => new Date(a.checkin) - new Date(b.checkin));
-      
       localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
       renderGlobalHotels();
       renderStayTab();
@@ -749,9 +786,24 @@
       showToast('住宿记录已添加！');
     }
 
-    function deleteHotel(index) {
+    async function deleteHotel(id) {
+      const index = bookedHotels.findIndex(h => h.id == id);
+      if (index === -1) return;
+
       bookedHotels.splice(index, 1);
       localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
+
+      try {
+        if (typeof id === 'number' && id > 1000000000000) {
+          // Local fallback ID, skip remote delete
+        } else {
+          const res = await fetch(`/api/hotels?id=${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('API delete failed');
+        }
+      } catch (e) {
+        console.warn('D1 delete failed:', e.message);
+      }
+
       renderGlobalHotels();
       renderStayTab();
     }
