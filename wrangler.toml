@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "gdx-travel-db"
-database_id = "placeholder-run-wrangler-d1-create-to-get-real-id"
+database_id = "6e855a95-e6d5-47f3-8bc4-e4dd18e76347"
