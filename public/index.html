@@ -377,7 +377,23 @@
       filtered.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        const cardImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+        
+        // Smart image selection
+        let cardImg;
+        const t = (item.type || '').toLowerCase();
+        if (item.image) {
+          cardImg = item.image;
+        } else if (t.includes('牛')) {
+          cardImg = 'images/food_beef.webp';
+        } else if (t.includes('生腌') || t.includes('海鲜') || t.includes('薄壳')) {
+          cardImg = 'images/food_seafood.webp';
+        } else if (t.includes('鹅')) {
+          cardImg = 'images/food_goose.webp';
+        } else if (t.includes('面') || t.includes('粉') || t.includes('粿') || t.includes('粥') || t.includes('丸')) {
+          cardImg = 'images/food_snack.webp';
+        } else {
+          cardImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+        }
         
         card.innerHTML = `
           <div class="card-img-wrapper">
@@ -427,7 +443,21 @@
       filtered.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        const cardImg = item.name.includes('桥') ? 'images/chaozhou_bridge.webp' : (IMAGE_MAPPING[item.city] || 'images/hero_banner.webp');
+        
+        // Smart image selection
+        let cardImg;
+        const n = (item.name || '').toLowerCase();
+        if (item.image) {
+          cardImg = item.image;
+        } else if (n.includes('寺') || n.includes('塔') || n.includes('学宫')) {
+          cardImg = 'images/play_temple.webp';
+        } else if (n.includes('岛') || n.includes('海') || n.includes('湾')) {
+          cardImg = 'images/play_beach.webp';
+        } else if (n.includes('桥')) {
+          cardImg = 'images/chaozhou_bridge.webp';
+        } else {
+          cardImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+        }
         
         card.innerHTML = `
           <div class="card-img-wrapper">
