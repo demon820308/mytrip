@@ -84,17 +84,7 @@
 
     <!-- Stay Tab -->
     <div class="tab-content d-none" id="tab-stay">
-      
-      <div class="transport-panel" style="margin-bottom: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h3 class="form-title" style="margin: 0; color: var(--primary);"><i class="fa-solid fa-bed"></i> 我的住宿行程</h3>
-          <button class="btn" style="width: auto; padding: 6px 15px;" onclick="openAddHotelModal()"><i class="fa-solid fa-plus"></i> 添加住宿</button>
-        </div>
 
-        <div class="timeline" id="hotel-list" style="margin-top: 25px;">
-          <!-- Rendered by JS -->
-        </div>
-      </div>
 
       <div class="stay-section" id="stay-list">
         <!-- Rendered by JS -->
@@ -204,8 +194,9 @@
   <!-- Add Hotel Modal -->
   <div id="add-hotel-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center;">
     <div class="form-card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
-      <h3 class="form-title" style="margin-bottom: 15px;"><i class="fa-solid fa-plus-circle"></i> 添加已预订酒店</h3>
+      <h3 class="form-title" style="margin-bottom: 15px;"><i class="fa-solid fa-plus-circle"></i> 添加已预订住宿</h3>
       <form id="hotel-form" onsubmit="handleAddHotel(event)">
+        <input type="hidden" id="hotel-city">
         <div class="form-group">
           <label class="form-label">酒店名称</label>
           <input type="text" id="hotel-name" class="form-input" required>
@@ -411,7 +402,6 @@
       renderEatTab();
       renderPlayTab();
       renderStayTab();
-      renderHotels();
       initTabs();
       loadSegments();
       
@@ -608,6 +598,9 @@
       });
     }
 
+    // Hotel Booking Logic
+    let bookedHotels = JSON.parse(localStorage.getItem('gdx_booked_hotels')) || [];
+
     // Render Stay Tab Cards (Regions and maps)
     function renderStayTab() {
       stayList.innerHTML = '';
@@ -616,6 +609,40 @@
         container.className = 'stay-card';
         const stayImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
         
+        let hotelsHtml = '';
+        const cityHotels = bookedHotels.filter(h => h.city === item.city);
+        if (cityHotels.length > 0) {
+          hotelsHtml += '<div style="margin-top: 20px; border-top: 1px dashed var(--panel-border); padding-top: 15px;">';
+          hotelsHtml += '<h4 style="margin-bottom: 10px; font-size: 0.95rem; color: var(--text-primary);">我的预订</h4>';
+          cityHotels.forEach(hotel => {
+            const index = bookedHotels.indexOf(hotel);
+            hotelsHtml += `
+              <div class="timeline-item" style="padding-bottom: 15px;">
+                <div class="timeline-dot" style="background: var(--primary);"></div>
+                <div class="timeline-content">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div class="station-flow" style="font-size: 1rem;">${hotel.name}</div>
+                    <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 5px;">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                  <div class="train-info" style="margin: 8px 0;">
+                    <span class="price-tag">¥${hotel.price}</span>
+                    <span><i class="fa-regular fa-calendar"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(hotel.name + ' ' + hotel.address)}" target="_blank" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.9rem; background: rgba(59, 130, 246, 0.1); padding: 6px 12px; border-radius: 6px;">
+                      <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i>
+                      <span>${hotel.address}</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          hotelsHtml += '</div>';
+        }
+
         container.innerHTML = `
           <img src="${stayImg}" alt="${item.city}" style="width:100%; height:100%; object-fit:cover; min-height: 250px;" loading="lazy">
           <div class="stay-info">
@@ -625,52 +652,23 @@
               <span class="stay-feature"><i class="fa-solid fa-wallet"></i> 主打性价比与市井风味</span>
             </div>
             <p class="card-description" style="margin-top: 10px;">${item.reason}</p>
-            <a href="${item.link}" target="_blank" class="btn btn-secondary" style="width: auto; align-self: flex-start; margin-top: 15px;">
-              <i class="fa-solid fa-map-location"></i> 在高德地图中查看该区
-            </a>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <a href="${item.link}" target="_blank" class="btn btn-secondary" style="width: auto;">
+                <i class="fa-solid fa-map-location"></i> 在高德地图中查看该区
+              </a>
+              <button class="btn" style="width: auto; background: var(--primary);" onclick="openAddHotelModal('${item.city}')">
+                <i class="fa-solid fa-plus"></i> 添加${item.city}住宿
+              </button>
+            </div>
+            ${hotelsHtml}
           </div>
         `;
         stayList.appendChild(container);
       });
     }
 
-    // Hotel Booking Logic
-    let bookedHotels = JSON.parse(localStorage.getItem('gdx_booked_hotels')) || [];
-
-    function renderHotels() {
-      const list = document.getElementById('hotel-list');
-      list.innerHTML = '';
-      if (bookedHotels.length === 0) return;
-      
-      bookedHotels.forEach((hotel, index) => {
-        const div = document.createElement('div');
-        div.className = 'timeline-item';
-        div.innerHTML = `
-          <div class="timeline-dot" style="background: var(--primary);"></div>
-          <div class="timeline-content">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div class="station-flow">${hotel.name}</div>
-              <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 5px;">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-            <div class="train-info" style="margin: 8px 0;">
-              <span class="price-tag">¥${hotel.price}</span>
-              <span><i class="fa-regular fa-calendar"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
-            </div>
-            <div style="margin-top: 10px;">
-              <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(hotel.name + ' ' + hotel.address)}" target="_blank" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.9rem; background: rgba(59, 130, 246, 0.1); padding: 6px 12px; border-radius: 6px;">
-                <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i>
-                <span>${hotel.address}</span>
-              </a>
-            </div>
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function openAddHotelModal() {
+    function openAddHotelModal(city) {
+      document.getElementById('hotel-city').value = city;
       document.getElementById('add-hotel-modal').classList.remove('d-none');
     }
 
@@ -680,17 +678,18 @@
 
     function handleAddHotel(e) {
       e.preventDefault();
+      const city = document.getElementById('hotel-city').value;
       const name = document.getElementById('hotel-name').value;
       const checkin = document.getElementById('hotel-checkin').value;
       const checkout = document.getElementById('hotel-checkout').value;
       const address = document.getElementById('hotel-address').value;
       const price = document.getElementById('hotel-price').value;
 
-      bookedHotels.push({ name, checkin, checkout, address, price });
+      bookedHotels.push({ city, name, checkin, checkout, address, price });
       bookedHotels.sort((a, b) => new Date(a.checkin) - new Date(b.checkin));
       
       localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
-      renderHotels();
+      renderStayTab();
       e.target.reset();
       closeAddHotelModal();
       showToast('住宿记录已添加！');
@@ -699,7 +698,7 @@
     function deleteHotel(index) {
       bookedHotels.splice(index, 1);
       localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
-      renderHotels();
+      renderStayTab();
     }
 
     // Load segment planner list (Try D1 API, fallback to LocalStorage)
