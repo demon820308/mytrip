@@ -647,3 +647,8 @@ body {
     justify-content: space-between;
   }
 }
+
+/* Utility classes */
+.d-none {
+  display: none !important;
+}

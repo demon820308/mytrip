@@ -450,7 +450,9 @@
       try {
         const res = await fetch('/api/segments');
         if (!res.ok) throw new Error('API fetch failed');
-        segments = await res.json();
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Data is not an array');
+        segments = data;
         
         // If empty DB, prepopulate D1 (in browser D1 might be empty initially)
         if (segments.length === 0) {
@@ -480,7 +482,10 @@
       }
       // Reload from D1
       const res = await fetch('/api/segments');
-      segments = await res.json();
+      if (!res.ok) throw new Error('Failed to reload segments after prepopulating');
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Reloaded data is not an array');
+      segments = data;
     }
 
     // Render transport timeline view
