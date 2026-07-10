@@ -162,6 +162,33 @@
   <!-- Toast -->
   <div class="toast" id="toast">复制成功，可直接分享！</div>
 
+  <!-- Edit Card Modal -->
+  <div id="edit-card-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center;">
+    <div class="form-card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
+      <h3 class="form-title"><i class="fa-solid fa-pencil"></i> 编辑卡片内容 <small style="font-size: 0.7rem; color: var(--text-secondary);">(仅本地保存)</small></h3>
+      <form id="edit-card-form" onsubmit="handleSaveCard(event)">
+        <input type="hidden" id="edit-card-type">
+        <input type="hidden" id="edit-card-index">
+        <div class="form-group">
+          <label class="form-label">名称</label>
+          <input type="text" id="edit-card-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">图片链接 (输入网图链接或本地路径)</label>
+          <input type="text" id="edit-card-image" class="form-input" placeholder="例如: images/aqiu.webp，可留空">
+        </div>
+        <div class="form-group">
+          <label class="form-label">描述</label>
+          <textarea id="edit-card-desc" class="form-input" style="height: 100px;" required></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> 保存修改</button>
+          <button type="button" class="btn btn-secondary" onclick="closeEditCardModal()">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Foot -->
   <footer style="text-align: center; padding: 40px; border-top: 1px solid var(--panel-border); margin-top: 80px; color: var(--text-secondary); font-size: 0.9rem;">
     <p>© 2026 黔闽市井行程指南 · 全线明码标价市井路线</p>
@@ -170,7 +197,7 @@
 
   <script>
     // Embedded Guide Data
-    const EAT_DATA = [
+    const DEFAULT_EAT_DATA = [
       // 揭阳
       { city: '揭阳', name: '贤德乒乓粿（老字号）', type: '糕点', address: '榕城区 西马路与北直街交叉口向北50米', desc: '老街坊逢年过节必去的打包店。纯手工制作，外皮极其软糯，下锅煎到两面微焦，内馅裹满芝麻、花生和少许咸香肉脯，甜咸交织，是最传统的揭阳配方。' },
       { city: '揭阳', name: '西马路尖米丸/尖米粿摊', type: '粿条', address: '榕城区 西马路中段', desc: '如果想吃咸口，就去西马路找这种老牌大排档。纯米浆手工搓成两头尖尖的“尖米丸”，配上鲜美的猪骨汤、肉碎和芹菜粒，汤头极其清鲜。' },
@@ -217,7 +244,7 @@
       { city: '泉州', name: '罗记面线糊', type: '面线糊', address: '鲤城区 县后路', desc: '深受周边居民喜爱的社区面线糊店，每天早上都有许多老街坊在此排队。' }
     ];
 
-    const PLAY_DATA = [
+    const DEFAULT_PLAY_DATA = [
       // 广州
       { city: '广州', name: '广州塔（小蛮腰）', address: '海珠区 阅江西路222号（地铁直达）', desc: '全高604米，大湾区的绝对地标。中转时间短可以在塔下花城广场拍摄全景（夜景极佳）；时间充裕可上塔体验摩天轮。', avoid: '千万别在黄昏排队上塔，那是人流高峰；塔底拉客的合影摊贩别信，推销高价且拍得丑，自己广角仰拍更优。' },
       { city: '广州', name: '花城广场与珠江新城', address: '天河区 珠江新城CBD核心区', desc: '广州城市客厅，两侧是东塔西塔等摩天大楼。晚上可以沿着中轴线散步，欣赏绝美的珠江两岸灯光秀，现代感与赛博朋克风拉满。', avoid: '周边高端餐厅物价极高。如果吃正宗高性价比广式点心，别在珠江新城吃，去老城区（公园前、长寿路）的陶陶居、点都德老店或惠福东路。' },
@@ -249,6 +276,48 @@
       { city: '汕头', area: '龙眼路或万象城周边', reason: '全汕头的平价美食核心圈。这里交通便利，方便深夜下楼吃夜粥，或者随时在房间点外卖，生腌、果汁冰几分钟就能送达。', link: 'https://ditu.amap.com/search?query=汕头龙眼路' },
       { city: '东山岛', area: '铜陵镇老居民区', reason: '原汁原味的闽南小镇渔村慢生活。走出来就是南门湾、顶街、前街等景点，物价真实不浮躁，码头送来的海鲜排档极多。', link: 'https://ditu.amap.com/search?query=东山县铜陵镇' }
     ];
+
+    let EAT_DATA = JSON.parse(localStorage.getItem('gdx_eat_data')) || JSON.parse(JSON.stringify(DEFAULT_EAT_DATA));
+    let PLAY_DATA = JSON.parse(localStorage.getItem('gdx_play_data')) || JSON.parse(JSON.stringify(DEFAULT_PLAY_DATA));
+
+    function openEditCardModal(type, originalIndex) {
+      const item = type === 'eat' ? EAT_DATA[originalIndex] : PLAY_DATA[originalIndex];
+      document.getElementById('edit-card-type').value = type;
+      document.getElementById('edit-card-index').value = originalIndex;
+      document.getElementById('edit-card-name').value = item.name || '';
+      document.getElementById('edit-card-image').value = item.image || '';
+      document.getElementById('edit-card-desc').value = item.desc || '';
+      document.getElementById('edit-card-modal').classList.remove('d-none');
+    }
+
+    function closeEditCardModal() {
+      document.getElementById('edit-card-modal').classList.add('d-none');
+    }
+
+    function handleSaveCard(e) {
+      e.preventDefault();
+      const type = document.getElementById('edit-card-type').value;
+      const index = parseInt(document.getElementById('edit-card-index').value);
+      const newName = document.getElementById('edit-card-name').value;
+      const newImg = document.getElementById('edit-card-image').value;
+      const newDesc = document.getElementById('edit-card-desc').value;
+
+      const dataArr = type === 'eat' ? EAT_DATA : PLAY_DATA;
+      dataArr[index].name = newName;
+      dataArr[index].image = newImg;
+      dataArr[index].desc = newDesc;
+
+      if (type === 'eat') {
+        localStorage.setItem('gdx_eat_data', JSON.stringify(EAT_DATA));
+        renderEatTab();
+      } else {
+        localStorage.setItem('gdx_play_data', JSON.stringify(PLAY_DATA));
+        renderPlayTab();
+      }
+
+      closeEditCardModal();
+      showToast('卡片修改已保存！');
+    }
 
     const DEFAULT_SEGMENTS = [
       { from_st: '都匀东', to_st: '广州南', date: '2026-07-11', dep_time: '09:24', train_no: 'G3701', price: 318, note: '贵州出发高效中转车次', sort_order: 1 },
@@ -398,6 +467,9 @@
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img class="card-img" src="${cardImg}" alt="${item.name}" loading="lazy">
+            <button class="icon-btn edit-card-btn" onclick="openEditCardModal('eat', ${EAT_DATA.indexOf(item)})" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+              <i class="fa-solid fa-pencil"></i>
+            </button>
             <span class="card-city-badge">${item.city}</span>
           </div>
           <div class="card-content">
@@ -462,6 +534,9 @@
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img class="card-img" src="${cardImg}" alt="${item.name}" loading="lazy">
+            <button class="icon-btn edit-card-btn" onclick="openEditCardModal('play', ${PLAY_DATA.indexOf(item)})" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+              <i class="fa-solid fa-pencil"></i>
+            </button>
             <span class="card-city-badge">${item.city}</span>
           </div>
           <div class="card-content">
