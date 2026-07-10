@@ -630,8 +630,8 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div class="station-flow" style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span><span style="color: var(--primary); font-weight: bold;">[${hotel.city}]</span> ${hotel.name}</span>
-                <span class="price-tag" style="font-size: 0.8rem; padding: 2px 6px;">¥${hotel.price}</span>
-                <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-regular fa-calendar"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
+                <span class="price-tag" style="font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; background: rgba(204, 120, 92, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; display: inline-block;">¥${hotel.price}</span>
+                <span style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-regular fa-calendar" style="color: var(--primary);"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
               </div>
               <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
                 <i class="fa-solid fa-trash-can"></i>
@@ -671,8 +671,8 @@
                   <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div class="station-flow" style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span>${hotel.name}</span>
-                      <span class="price-tag" style="font-size: 0.8rem; padding: 2px 6px;">¥${hotel.price}</span>
-                      <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-regular fa-calendar"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
+                      <span class="price-tag" style="font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; background: rgba(204, 120, 92, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; display: inline-block;">¥${hotel.price}</span>
+                      <span style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-regular fa-calendar" style="color: var(--primary);"></i> ${hotel.checkin} 至 ${hotel.checkout}</span>
                     </div>
                     <button class="icon-btn" onclick="deleteHotel(${index})" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 5px;">
                       <i class="fa-solid fa-trash-can"></i>
