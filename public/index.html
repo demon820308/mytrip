@@ -314,31 +314,34 @@
       <form id="trip-manager-form" class="d-none" onsubmit="saveTripConfig(event)">
         <input type="hidden" id="trip-form-action" value="add">
         <div class="form-group">
-          <label class="form-label">行程唯一ID (只允许小写英文字母缩写，如: gansu)</label>
-          <input type="text" id="trip-id-input" class="form-input" placeholder="例如：gansu" required pattern="[a-z]+">
+          <label class="form-label">行程英文缩写 ID <span style="opacity:0.6;font-weight:400;font-size:0.8rem;">（仅小写字母，如 gansu）</span></label>
+          <input type="text" id="trip-id-input" class="form-input" placeholder="gansu" required pattern="[a-z]+" oninput="this.value=this.value.toLowerCase().replace(/[^a-z]/g,'')">
         </div>
         <div class="form-group">
           <label class="form-label">行程标题</label>
           <input type="text" id="trip-title-input" class="form-input" placeholder="例如：甘南市井旅行指南" required>
         </div>
         <div class="form-group">
-          <label class="form-label">副标题 (路线文字说明)</label>
-          <input type="text" id="trip-subtitle-input" class="form-input" placeholder="例如：兰州 ➔ 临夏 ➔ 夏河 ➔ 合作" required>
+          <label class="form-label">副标题 <span style="opacity:0.6;font-weight:400;font-size:0.8rem;">（添加城市后自动生成，可手动修改）</span></label>
+          <input type="text" id="trip-subtitle-input" class="form-input" placeholder="将根据城市列表自动生成" required>
         </div>
         <div class="form-group">
-          <label class="form-label">背景大图链接 (可填 images/hero_banner.webp)</label>
-          <input type="text" id="trip-banner-input" class="form-input" placeholder="images/hero_banner.webp">
+          <label class="form-label">背景大图</label>
+          <select id="trip-banner-input" class="form-input">
+            <option value="images/hero_banner.webp">默认横幅 (hero_banner.webp)</option>
+            <option value="images/guangzhou.webp">广州 (guangzhou.webp)</option>
+            <option value="images/chaozhou_scenery.webp">潮州 (chaozhou_scenery.webp)</option>
+            <option value="images/shantou_shengyin.webp">汕头 (shantou_shengyin.webp)</option>
+            <option value="images/dongshan_road.webp">东山岛 (dongshan_road.webp)</option>
+            <option value="images/quanzhou_temple.webp">泉州 (quanzhou_temple.webp)</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label">路线城市与住宿配置</label>
-          <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 6px; line-height: 1.4;">
-            每行填一个城市，半角逗号分隔，格式：<br>
-            <strong>城市名称, 是否中转(y/n), [住宿区域], [推荐理由], [地图搜索词]</strong><br>
-            例如：<br>
-            都匀东, y<br>
-            广州, n, 广州东站附近, 交通方便美食多, 广州东站
-          </div>
-          <textarea id="trip-route-input" class="form-input" style="height: 150px; font-family: monospace; font-size: 0.85rem;" placeholder="都匀东, y&#10;广州, n, 广州东站附近, 交通方便美食多, 广州东站" required></textarea>
+          <label class="form-label">路线城市</label>
+          <div id="city-list-builder" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
+          <button type="button" onclick="addCityRow()" style="width:100%; padding:8px; border:1px dashed var(--panel-border); border-radius:6px; background:transparent; color:var(--text-secondary); cursor:pointer; font-size:0.9rem;">
+            <i class="fa-solid fa-plus"></i> 添加城市
+          </button>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> 确认保存</button>
@@ -1693,36 +1696,99 @@
       document.getElementById('trip-manager-form').reset();
     }
 
+    // Add a single city row to the builder
+    function addCityRow(data = {}) {
+      const builder = document.getElementById('city-list-builder');
+      const idx = builder.children.length;
+      const isTransit = data.isTransitOnly || false;
+
+      const row = document.createElement('div');
+      row.className = 'city-builder-row';
+      row.style.cssText = 'border:1px solid var(--panel-border); border-radius:8px; padding:10px; background:var(--card-bg); display:flex; flex-direction:column; gap:8px;';
+      row.innerHTML = `
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" placeholder="城市名称" value="${data.name||''}"
+            class="form-input city-name" style="flex:1; margin:0;"
+            oninput="updateSubtitlePreview()">
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.85rem; white-space:nowrap; cursor:pointer;">
+            <input type="checkbox" class="city-transit" ${isTransit?'checked':''} onchange="toggleTransitRow(this)">
+            仅中转
+          </label>
+          <button type="button" onclick="removeCityRow(this)" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:1rem;padding:4px;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="city-stay-fields" style="display:${isTransit?'none':'flex'}; flex-direction:column; gap:6px;">
+          <input type="text" placeholder="住宿推荐区域（如：广州东站附近）" value="${data.stayArea||''}"
+            class="form-input city-area" style="margin:0; font-size:0.85rem;">
+          <input type="text" placeholder="推荐理由（如：交通方便，美食多）" value="${data.stayReason||''}"
+            class="form-input city-reason" style="margin:0; font-size:0.85rem;">
+          <input type="text" placeholder="高德地图搜索词（如：广州东站）" value="${data.stayLink ? decodeURIComponent(data.stayLink.split('query=')[1]||'') : ''}"
+            class="form-input city-map" style="margin:0; font-size:0.85rem;">
+        </div>
+      `;
+      builder.appendChild(row);
+      updateSubtitlePreview();
+    }
+
+    function toggleTransitRow(checkbox) {
+      const stayFields = checkbox.closest('.city-builder-row').querySelector('.city-stay-fields');
+      stayFields.style.display = checkbox.checked ? 'none' : 'flex';
+      updateSubtitlePreview();
+    }
+
+    function removeCityRow(btn) {
+      btn.closest('.city-builder-row').remove();
+      updateSubtitlePreview();
+    }
+
+    function updateSubtitlePreview() {
+      const rows = document.querySelectorAll('#city-list-builder .city-builder-row');
+      const names = [...rows].map(r => r.querySelector('.city-name').value.trim()).filter(Boolean);
+      if (names.length > 0) {
+        const subtitleEl = document.getElementById('trip-subtitle-input');
+        // Only auto-update if user hasn't manually edited
+        if (!subtitleEl.dataset.manualEdit) {
+          subtitleEl.value = names.join(' ➔ ');
+        }
+      }
+    }
+
     function showTripForm(action) {
       document.getElementById('trip-manager-actions').classList.add('d-none');
       document.getElementById('trip-manager-form').classList.remove('d-none');
       document.getElementById('trip-form-action').value = action;
-      
+      document.getElementById('city-list-builder').innerHTML = '';
+
       const idInput = document.getElementById('trip-id-input');
+      const subtitleInput = document.getElementById('trip-subtitle-input');
+      subtitleInput.dataset.manualEdit = '';
+
       if (action === 'add') {
         idInput.disabled = false;
-        idInput.placeholder = "例如：gansu";
+        idInput.value = '';
+        document.getElementById('trip-title-input').value = '';
+        subtitleInput.value = '';
+        document.getElementById('trip-banner-input').value = 'images/hero_banner.webp';
       } else {
-        // Edit mode
+        // Edit mode — pre-fill from current active config
         idInput.disabled = true;
         const config = getActiveTripConfig();
-        document.getElementById('trip-id-input').value = config.id;
+        idInput.value = config.id;
         document.getElementById('trip-title-input').value = config.title;
-        document.getElementById('trip-subtitle-input').value = config.subtitle;
-        document.getElementById('trip-banner-input').value = config.bannerImage || 'images/hero_banner.webp';
-        
-        // Convert route JSON back to lines
-        const routeLines = config.route.map(r => {
-          if (r.isTransitOnly) {
-            return `${r.name}, y`;
-          } else {
-            const searchWord = r.stayLink ? decodeURIComponent(r.stayLink.split('query=')[1] || '') : '';
-            return `${r.name}, n, ${r.stayArea || ''}, ${r.stayReason || ''}, ${searchWord}`;
-          }
-        }).join('\n');
-        
-        document.getElementById('trip-route-input').value = routeLines;
+        subtitleInput.value = config.subtitle;
+        subtitleInput.dataset.manualEdit = '1'; // don't overwrite user's existing subtitle
+        // Set banner dropdown
+        const bannerSel = document.getElementById('trip-banner-input');
+        [...bannerSel.options].forEach(o => { o.selected = o.value === config.bannerImage; });
+        // Render existing cities
+        (config.route || []).forEach(r => addCityRow(r));
       }
+
+      // Let subtitle re-auto-generate if it's a new trip
+      document.getElementById('trip-subtitle-input').addEventListener('input', function() {
+        this.dataset.manualEdit = this.value ? '1' : '';
+      }, { once: true });
     }
 
     async function saveTripConfig(e) {
@@ -1734,52 +1800,38 @@
       const id = document.getElementById('trip-id-input').value.trim().toLowerCase();
       const title = document.getElementById('trip-title-input').value.trim();
       const subtitle = document.getElementById('trip-subtitle-input').value.trim();
-      const banner_image = document.getElementById('trip-banner-input').value.trim() || 'images/hero_banner.webp';
-      const routeRaw = document.getElementById('trip-route-input').value;
+      const banner_image = document.getElementById('trip-banner-input').value || 'images/hero_banner.webp';
 
-      // Parse route raw text
-      const lines = routeRaw.split('\n').filter(l => l.trim() !== '');
-      let routeObj;
-      try {
-        routeObj = lines.map(line => {
-          const parts = line.split(',').map(p => p.trim());
-          const name = parts[0];
-          if (!name) throw new Error('城市名不能为空');
-          const isTransit = parts[1] === 'y' || parts[1] === 'yes' || parts[1] === 'true';
-          if (isTransit) {
-            return { name, isTransitOnly: true };
-          } else {
-            return {
-              name,
-              isTransitOnly: false,
-              image: 'images/hero_banner.webp',
-              stayArea: parts[2] || '',
-              stayReason: parts[3] || '',
-              stayLink: parts[4] ? `https://ditu.amap.com/search?query=${encodeURIComponent(parts[4])}` : ''
-            };
-          }
-        });
-      } catch (err) {
-        alert('路线解析格式错误，请检查逗号分隔格式：\n' + err.message);
+      // Build route from city rows
+      const rows = document.querySelectorAll('#city-list-builder .city-builder-row');
+      if (rows.length === 0) {
+        alert('请至少添加一个城市！');
         return;
       }
 
-      const tripData = {
-        id,
-        title,
-        subtitle,
-        banner_image,
-        route_json: JSON.stringify(routeObj)
-      };
+      const routeObj = [...rows].map(row => {
+        const name = row.querySelector('.city-name').value.trim();
+        if (!name) return null;
+        const isTransit = row.querySelector('.city-transit').checked;
+        if (isTransit) return { name, isTransitOnly: true };
+        const mapWord = row.querySelector('.city-map').value.trim();
+        return {
+          name,
+          isTransitOnly: false,
+          image: 'images/hero_banner.webp',
+          stayArea: row.querySelector('.city-area').value.trim(),
+          stayReason: row.querySelector('.city-reason').value.trim(),
+          stayLink: mapWord ? `https://ditu.amap.com/search?query=${encodeURIComponent(mapWord)}` : ''
+        };
+      }).filter(Boolean);
+
+      const tripData = { id, title, subtitle, banner_image, route_json: JSON.stringify(routeObj) };
 
       try {
         const method = action === 'add' ? 'POST' : 'PUT';
         const res = await fetch('/api/trips', {
           method,
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-password': pwd
-          },
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
           body: JSON.stringify(tripData)
         });
 
@@ -1788,16 +1840,13 @@
           showToast('密码错误，无权操作！');
           return;
         }
-
         if (!res.ok) {
-          const errorMsg = await res.json();
-          throw new Error(errorMsg.error || '保存行程配置失败');
+          const err = await res.json();
+          throw new Error(err.error || '保存行程配置失败');
         }
 
         showToast(action === 'add' ? '新建行程成功！' : '编辑行程成功！');
-        if (action === 'add') {
-          localStorage.setItem('gdx_current_trip_id', id);
-        }
+        if (action === 'add') localStorage.setItem('gdx_current_trip_id', id);
         window.location.reload();
       } catch (err) {
         alert('操作失败: ' + err.message);
