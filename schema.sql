@@ -38,3 +38,12 @@ CREATE TABLE IF NOT EXISTS guide_items (
   trip_id      TEXT DEFAULT 'qianmin',
   created_at   TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS trips (
+  id           TEXT PRIMARY KEY,
+  title        TEXT NOT NULL,
+  subtitle     TEXT,
+  banner_image TEXT,
+  route_json   TEXT NOT NULL,
+  created_at   TEXT DEFAULT (datetime('now'))
+);
