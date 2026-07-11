@@ -296,6 +296,10 @@
       
       <!-- Action Panel -->
       <div id="trip-manager-actions" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="padding: 8px 12px; border-radius: 6px; background: var(--bg-secondary, rgba(0,0,0,0.05)); font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-circle-dot" style="color: var(--primary);"></i>
+          当前行程：<strong id="trip-manager-current-name" style="color: var(--text-primary);"></strong>
+        </div>
         <button class="btn" onclick="showTripForm('add')" style="background: var(--primary); width: 100%;">
           <i class="fa-solid fa-plus-circle"></i> 新建行程单
         </button>
@@ -1682,6 +1686,8 @@
 
     // --- Trip Manager Modal Logic ---
     function openTripManagerModal() {
+      const nameEl = document.getElementById('trip-manager-current-name');
+      if (nameEl) nameEl.textContent = getActiveTripConfig().title;
       showTripActions();
       document.getElementById('trip-manager-modal').classList.remove('d-none');
     }
