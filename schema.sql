@@ -22,3 +22,16 @@ CREATE TABLE IF NOT EXISTS booked_hotels (
   price       REAL NOT NULL,
   created_at  TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS guide_items (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  category     TEXT NOT NULL,
+  city         TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  type         TEXT,
+  address      TEXT NOT NULL,
+  desc         TEXT NOT NULL,
+  avoid        TEXT,
+  is_special   INTEGER DEFAULT 0,
+  created_at   TEXT DEFAULT (datetime('now'))
+);

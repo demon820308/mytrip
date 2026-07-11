@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚄 贵州都匀至福建三明·联名市井自助行程指南</title>
+  <title id="site-title">🚄 黔闽市井行程指南</title>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -13,25 +13,11 @@
   <!-- Hero Section -->
   <section class="hero">
     <div class="hero-content">
-      <h1 class="hero-title">黔闽市井行程指南</h1>
-      <p class="hero-subtitle">贵州都匀 ➔ 广州 ➔ 揭阳 ➔ 潮州 ➔ 汕头 ➔ 东山岛 ➔ 泉州 ➔ 三明</p>
+      <h1 class="hero-title" id="hero-title">黔闽市井行程指南</h1>
+      <p class="hero-subtitle" id="hero-subtitle"></p>
       
-      <div class="route-flow">
-        <span class="route-node">都匀东</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">广州</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">揭阳</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">潮州</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">汕头</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">东山岛</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">泉州</span>
-        <i class="fa-solid fa-chevron-right route-arrow"></i>
-        <span class="route-node">三明</span>
+      <div class="route-flow" id="route-flow">
+        <!-- Rendered by JS -->
       </div>
     </div>
   </section>
@@ -70,6 +56,11 @@
     
     <!-- Eat Tab -->
     <div class="tab-content" id="tab-eat">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('eat')">
+          <i class="fa-solid fa-plus-circle"></i> 添加美食推荐
+        </button>
+      </div>
       <div class="cards-grid" id="eat-grid">
         <!-- Rendered by JS -->
       </div>
@@ -77,6 +68,11 @@
 
     <!-- Play Tab -->
     <div class="tab-content d-none" id="tab-play">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('play')">
+          <i class="fa-solid fa-plus-circle"></i> 添加景点推荐
+        </button>
+      </div>
       <div class="cards-grid" id="play-grid">
         <!-- Rendered by JS -->
       </div>
@@ -184,28 +180,57 @@
   <!-- Toast -->
   <div class="toast" id="toast">复制成功，可直接分享！</div>
 
-  <!-- Edit Card Modal -->
-  <div id="edit-card-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center;">
+  <!-- Add/Edit Guide Item Modal -->
+  <div id="guide-item-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center;">
     <div class="form-card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
-      <h3 class="form-title"><i class="fa-solid fa-pencil"></i> 编辑卡片内容 <small style="font-size: 0.7rem; color: var(--text-secondary);">(仅本地保存)</small></h3>
-      <form id="edit-card-form" onsubmit="handleSaveCard(event)">
-        <input type="hidden" id="edit-card-type">
-        <input type="hidden" id="edit-card-index">
+      <h3 class="form-title" id="guide-modal-title"><i class="fa-solid fa-plus-circle"></i> 添加记录</h3>
+      <form id="guide-item-form" onsubmit="handleSaveGuideItem(event)">
+        <input type="hidden" id="guide-id">
+        <input type="hidden" id="guide-category">
+        
+        <div class="form-group">
+          <label class="form-label">城市</label>
+          <select id="guide-city" class="form-input" required>
+            <!-- Rendered dynamically by JS -->
+          </select>
+        </div>
+        
         <div class="form-group">
           <label class="form-label">名称</label>
-          <input type="text" id="edit-card-name" class="form-input" required>
+          <input type="text" id="guide-name" class="form-input" required placeholder="例如：西新老牌肠粉">
         </div>
+        
+        <!-- Only for EAT -->
+        <div class="form-group" id="group-guide-type">
+          <label class="form-label">分类标签 (仅美食)</label>
+          <input type="text" id="guide-type" class="form-input" placeholder="例如：肠粉、牛肉/火锅">
+        </div>
+        
         <div class="form-group">
-          <label class="form-label">图片链接 (输入网图链接或本地路径)</label>
-          <input type="text" id="edit-card-image" class="form-input" placeholder="例如: images/aqiu.webp，可留空">
+          <label class="form-label">详细地址</label>
+          <input type="text" id="guide-address" class="form-input" required placeholder="例如：湘桥区 西新路中段">
         </div>
+        
         <div class="form-group">
-          <label class="form-label">描述</label>
-          <textarea id="edit-card-desc" class="form-input" style="height: 100px;" required></textarea>
+          <label class="form-label">推荐描述</label>
+          <textarea id="guide-desc" class="form-input" style="height: 100px;" required placeholder="写写口味特色、招牌菜推荐等..."></textarea>
         </div>
+        
+        <!-- Only for PLAY -->
+        <div class="form-group" id="group-guide-avoid">
+          <label class="form-label">避坑指南 (仅景点)</label>
+          <textarea id="guide-avoid" class="form-input" style="height: 80px;" placeholder="例如：避开高峰期、注意防晒等..."></textarea>
+        </div>
+        
+        <!-- Only for EAT -->
+        <div class="form-group" id="group-guide-special" style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="guide-is-special" style="width: 16px; height: 16px; accent-color: var(--primary);">
+          <label class="form-label" style="margin-bottom: 0; cursor: pointer;" for="guide-is-special">加入“特色生腌”专题</label>
+        </div>
+        
         <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> 保存修改</button>
-          <button type="button" class="btn btn-secondary" onclick="closeEditCardModal()">取消</button>
+          <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> 确认保存</button>
+          <button type="button" class="btn btn-secondary" onclick="closeGuideItemModal()">取消</button>
         </div>
       </form>
     </div>
@@ -329,54 +354,276 @@
       { city: '泉州', name: '洛阳桥', address: '洛江区 洛阳江水道上', desc: '中国古代著名海港大石桥，北宋时期的工程奇迹，采用独特的“筏形基础”和“养蛎固基”技术。', avoid: '桥长一公里无遮蔽物。千万别在11点-15点暴晒时段去。建议下午5点左右前往，江风徐徐，夕阳余晖洒在桥石上极其壮丽。' }
     ];
 
-    const STAY_DATA = [
-      { city: '揭阳', area: '进贤门或西马路老城区', reason: '老城区保留了最原汁原味的揭阳生活气息，步行就能吃遍所有老字号的乒乓粿和糖水，体验最地道的揭阳烟火气。', link: 'https://ditu.amap.com/search?query=揭阳进贤门' },
-      { city: '潮州', area: '古城西门外居民区', reason: '避开景区高昂物价。不仅价格非常亲民，而且步行进古城很近，楼下几乎全是用心经营的本地人社区餐饮，能吃到最正宗的肠粉和粿条。', link: 'https://ditu.amap.com/search?query=潮州西门口' },
-      { city: '汕头', area: '龙眼路或万象城周边', reason: '全汕头的平价美食核心圈。这里交通便利，方便深夜下楼吃夜粥，或者随时在房间点外卖，生腌、果汁冰几分钟就能送达。', link: 'https://ditu.amap.com/search?query=汕头龙眼路' },
-      { city: '东山岛', area: '铜陵镇老居民区', reason: '原汁原味的闽南小镇渔村慢生活。走出来就是南门湾、顶街、前街等景点，物价真实不浮躁，码头送来的海鲜排档极多。', link: 'https://ditu.amap.com/search?query=东山县铜陵镇' },
-      { city: '泉州', area: '西街周边民宿或丰泽区酒店', reason: '住在西街周边可以深度体验泉州半城烟火半城仙的氛围，早起就能逛吃。如果对住宿品质要求高，可以选择丰泽区的新型酒店，打车去老城也很近。', link: 'https://ditu.amap.com/search?query=泉州西街' }
-    ];
+    const ROUTE_CONFIG = {
+      title: "黔闽市井行程指南",
+      subtitle: "贵州都匀 ➔ 广州 ➔ 揭阳 ➔ 潮州 ➔ 汕头 ➔ 东山岛 ➔ 泉州 ➔ 三明",
+      bannerImage: "images/hero_banner.webp",
+      route: [
+        { name: "都匀东", isTransitOnly: true },
+        { 
+          name: "广州", 
+          isTransitOnly: false, 
+          image: "images/guangzhou.webp",
+          stayArea: "广州东站或体育西路周边", 
+          stayReason: "交通极为便利，方便快速换乘，周边商圈繁华，美食店极多。", 
+          stayLink: "https://ditu.amap.com/search?query=广州东站" 
+        },
+        { 
+          name: "揭阳", 
+          isTransitOnly: false, 
+          image: "images/jieyang_scenery.webp",
+          stayArea: "进贤门或西马路老城区", 
+          stayReason: "老城区保留了最原汁原味的揭阳生活气息，步行就能吃遍所有老字号。", 
+          stayLink: "https://ditu.amap.com/search?query=揭阳进贤门" 
+        },
+        { 
+          name: "潮州", 
+          isTransitOnly: false, 
+          image: "images/chaozhou_scenery.webp",
+          stayArea: "古城西门外居民区", 
+          stayReason: "避开景区高昂物价，价格非常亲民，而且步行进古城很近。", 
+          stayLink: "https://ditu.amap.com/search?query=潮州西门口" 
+        },
+        { 
+          name: "汕头", 
+          isTransitOnly: false, 
+          image: "images/shantou_scenery.webp",
+          stayArea: "龙眼路或万象城周边", 
+          stayReason: "全汕头的平价美食核心圈，方便深夜下楼吃夜粥，外卖几分钟送达。", 
+          stayLink: "https://ditu.amap.com/search?query=汕头龙眼路" 
+        },
+        { 
+          name: "东山岛", 
+          isTransitOnly: false, 
+          image: "images/dongshan_scenery.webp",
+          stayArea: "铜陵镇老居民区", 
+          stayReason: "体验原汁原味的闽南小镇慢生活，走出来就是南门湾、顶街等景点。", 
+          stayLink: "https://ditu.amap.com/search?query=东山县铜陵镇" 
+        },
+        { 
+          name: "泉州", 
+          isTransitOnly: false, 
+          image: "images/quanzhou_scenery.webp",
+          stayArea: "西街周边民宿或丰泽区酒店", 
+          stayReason: "西街周边可深度体验半城烟火半城仙氛围；质量要求高可选择丰泽区。", 
+          stayLink: "https://ditu.amap.com/search?query=泉州西街" 
+        },
+        { name: "三明", isTransitOnly: true }
+      ]
+    };
 
-    let EAT_DATA = JSON.parse(localStorage.getItem('gdx_eat_data')) || JSON.parse(JSON.stringify(DEFAULT_EAT_DATA));
-    let PLAY_DATA = JSON.parse(localStorage.getItem('gdx_play_data')) || JSON.parse(JSON.stringify(DEFAULT_PLAY_DATA));
-
-    function openEditCardModal(type, originalIndex) {
-      const item = type === 'eat' ? EAT_DATA[originalIndex] : PLAY_DATA[originalIndex];
-      document.getElementById('edit-card-type').value = type;
-      document.getElementById('edit-card-index').value = originalIndex;
-      document.getElementById('edit-card-name').value = item.name || '';
-      document.getElementById('edit-card-image').value = item.image || '';
-      document.getElementById('edit-card-desc').value = item.desc || '';
-      document.getElementById('edit-card-modal').classList.remove('d-none');
+    function getStayData() {
+      return ROUTE_CONFIG.route
+        .filter(r => !r.isTransitOnly && r.stayArea)
+        .map(r => ({
+          city: r.name,
+          area: r.stayArea,
+          reason: r.stayReason,
+          link: r.stayLink
+        }));
     }
 
-    function closeEditCardModal() {
-      document.getElementById('edit-card-modal').classList.add('d-none');
+    function getCityImage(cityName) {
+      const r = ROUTE_CONFIG.route.find(x => x.name === cityName);
+      return (r && r.image) || 'images/hero_banner.webp';
     }
 
-    function handleSaveCard(e) {
+    let EAT_DATA = JSON.parse(JSON.stringify(DEFAULT_EAT_DATA));
+    let PLAY_DATA = JSON.parse(JSON.stringify(DEFAULT_PLAY_DATA));
+
+    async function loadGuides() {
+      try {
+        const res = await fetch('/api/guides');
+        if (!res.ok) throw new Error('API fetch failed');
+        let data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Data is not an array');
+        
+        // If D1 is empty, prepopulate it
+        if (data.length === 0) {
+          data = await prepopulateGuidesDb();
+        }
+        
+        EAT_DATA = data.filter(item => item.category === 'eat');
+        PLAY_DATA = data.filter(item => item.category === 'play');
+      } catch (e) {
+        console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
+        const localEat = localStorage.getItem('gdx_eat_data');
+        const localPlay = localStorage.getItem('gdx_play_data');
+        if (localEat) EAT_DATA = JSON.parse(localEat);
+        if (localPlay) PLAY_DATA = JSON.parse(localPlay);
+      }
+      renderEatTab();
+      renderPlayTab();
+    }
+
+    async function prepopulateGuidesDb() {
+      const itemsToInsert = [];
+      DEFAULT_EAT_DATA.forEach(item => {
+        itemsToInsert.push({ ...item, category: 'eat', is_special: item.isSpecial ? 1 : 0 });
+      });
+      DEFAULT_PLAY_DATA.forEach(item => {
+        itemsToInsert.push({ ...item, category: 'play', is_special: 0 });
+      });
+
+      for (const item of itemsToInsert) {
+        await fetch('/api/guides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        });
+      }
+
+      const res = await fetch('/api/guides');
+      if (!res.ok) throw new Error('Failed to reload guides after prepopulating');
+      return await res.json();
+    }
+
+    function openGuideItemModal(category, id = null) {
+      document.getElementById('guide-item-form').reset();
+      document.getElementById('guide-id').value = id || '';
+      document.getElementById('guide-category').value = category;
+
+      // Toggle form elements
+      if (category === 'eat') {
+        document.getElementById('group-guide-type').style.display = 'block';
+        document.getElementById('group-guide-special').style.display = 'flex';
+        document.getElementById('group-guide-avoid').style.display = 'none';
+        document.getElementById('guide-type').required = true;
+      } else {
+        document.getElementById('group-guide-type').style.display = 'none';
+        document.getElementById('group-guide-special').style.display = 'none';
+        document.getElementById('group-guide-avoid').style.display = 'block';
+        document.getElementById('guide-type').required = false;
+      }
+
+      const isEdit = id !== null;
+      document.getElementById('guide-modal-title').innerHTML = isEdit
+        ? `<i class="fa-solid fa-pencil"></i> 编辑${category === 'eat' ? '美食' : '景点'}`
+        : `<i class="fa-solid fa-plus-circle"></i> 添加${category === 'eat' ? '美食' : '景点'}`;
+
+      if (isEdit) {
+        const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
+        const item = dataArr.find(x => x.id == id);
+        if (item) {
+          document.getElementById('guide-city').value = item.city;
+          document.getElementById('guide-name').value = item.name;
+          document.getElementById('guide-address').value = item.address;
+          document.getElementById('guide-desc').value = item.desc;
+          if (category === 'eat') {
+            document.getElementById('guide-type').value = item.type || '';
+            document.getElementById('guide-is-special').checked = !!item.is_special || !!item.isSpecial;
+          } else {
+            document.getElementById('guide-avoid').value = item.avoid || '';
+          }
+        }
+      }
+
+      document.getElementById('guide-item-modal').classList.remove('d-none');
+    }
+
+    function closeGuideItemModal() {
+      document.getElementById('guide-item-modal').classList.add('d-none');
+    }
+
+    async function handleSaveGuideItem(e) {
       e.preventDefault();
-      const type = document.getElementById('edit-card-type').value;
-      const index = parseInt(document.getElementById('edit-card-index').value);
-      const newName = document.getElementById('edit-card-name').value;
-      const newImg = document.getElementById('edit-card-image').value;
-      const newDesc = document.getElementById('edit-card-desc').value;
+      const id = document.getElementById('guide-id').value;
+      const category = document.getElementById('guide-category').value;
+      const city = document.getElementById('guide-city').value;
+      const name = document.getElementById('guide-name').value.trim();
+      const address = document.getElementById('guide-address').value.trim();
+      const desc = document.getElementById('guide-desc').value.trim();
 
-      const dataArr = type === 'eat' ? EAT_DATA : PLAY_DATA;
-      dataArr[index].name = newName;
-      dataArr[index].image = newImg;
-      dataArr[index].desc = newDesc;
+      const itemData = { category, city, name, address, desc };
 
-      if (type === 'eat') {
-        localStorage.setItem('gdx_eat_data', JSON.stringify(EAT_DATA));
+      if (category === 'eat') {
+        itemData.type = document.getElementById('guide-type').value.trim();
+        itemData.is_special = document.getElementById('guide-is-special').checked ? 1 : 0;
+        itemData.avoid = null;
+      } else {
+        itemData.type = null;
+        itemData.is_special = 0;
+        itemData.avoid = document.getElementById('guide-avoid').value.trim();
+      }
+
+      const isEdit = id !== '';
+      if (isEdit) {
+        itemData.id = Number(id);
+      }
+
+      try {
+        const method = isEdit ? 'PUT' : 'POST';
+        const res = await fetch('/api/guides', {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(itemData)
+        });
+
+        if (!res.ok) throw new Error('API save failed');
+
+        if (!isEdit) {
+          const result = await res.json();
+          itemData.id = result.id;
+        }
+
+        const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
+        if (isEdit) {
+          const idx = dataArr.findIndex(x => x.id == id);
+          if (idx !== -1) dataArr[idx] = itemData;
+        } else {
+          dataArr.push(itemData);
+        }
+      } catch (err) {
+        console.warn('API error, falling back to LocalStorage:', err.message);
+        const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
+        if (isEdit) {
+          const idx = dataArr.findIndex(x => x.id == id);
+          if (idx !== -1) dataArr[idx] = { ...dataArr[idx], ...itemData };
+        } else {
+          itemData.id = Date.now() + Math.random();
+          dataArr.push(itemData);
+        }
+      }
+
+      localStorage.setItem(`gdx_${category}_data`, JSON.stringify(category === 'eat' ? EAT_DATA : PLAY_DATA));
+
+      if (category === 'eat') {
         renderEatTab();
       } else {
-        localStorage.setItem('gdx_play_data', JSON.stringify(PLAY_DATA));
         renderPlayTab();
       }
 
-      closeEditCardModal();
-      showToast('卡片修改已保存！');
+      closeGuideItemModal();
+      showToast(isEdit ? '记录已保存！' : '记录已添加！');
+    }
+
+    async function deleteGuideItem(id, category) {
+      if (!confirm(`确定要删除这个${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
+
+      const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
+      const idx = dataArr.findIndex(x => x.id == id);
+      if (idx === -1) return;
+
+      dataArr.splice(idx, 1);
+      localStorage.setItem(`gdx_${category}_data`, JSON.stringify(dataArr));
+
+      try {
+        if (typeof id === 'number' && id > 1000000000000) {
+          // Local fallback ID
+        } else {
+          const res = await fetch(`/api/guides?id=${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('API delete failed');
+        }
+      } catch (e) {
+        console.warn('D1 delete failed:', e.message);
+      }
+
+      if (category === 'eat') {
+        renderEatTab();
+      } else {
+        renderPlayTab();
+      }
+      showToast('记录已删除！');
     }
 
     const DEFAULT_SEGMENTS = [
@@ -385,16 +632,6 @@
       { from_st: '潮汕', to_st: '三明北', date: '2026-07-12', dep_time: '18:10', train_no: 'D2329', price: 165, note: '潮汕直达三明北备选', sort_order: 3 },
       { from_st: '饶平', to_st: '三明', date: '2026-07-12', dep_time: '08:45', train_no: 'D2312', price: 172, note: '闽粤边界车站直达三明备选', sort_order: 4 }
     ];
-
-    // Image mapping config (Premium banner image replacement based on cards)
-    const IMAGE_MAPPING = {
-      '广州': 'images/guangzhou.webp',
-      '揭阳': 'images/jieyang_scenery.webp',
-      '潮州': 'images/chaozhou_scenery.webp',
-      '汕头': 'images/shantou_scenery.webp',
-      '东山岛': 'images/dongshan_scenery.webp',
-      '泉州': 'images/quanzhou_scenery.webp'
-    };
 
     // State Variables
     let currentTab = 'eat';
@@ -418,11 +655,13 @@
 
     // Init App
     window.addEventListener('DOMContentLoaded', () => {
+      initRouteConfig();
       renderCityFilters();
       renderEatTab();
       renderPlayTab();
       renderStayTab();
       loadHotels();
+      loadGuides();
       initTabs();
       loadSegments();
       
@@ -440,6 +679,36 @@
         });
       }
     });
+
+    function initRouteConfig() {
+      // Set Document Title
+      const titleEl = document.getElementById('site-title');
+      if (titleEl) titleEl.textContent = "🚄 " + ROUTE_CONFIG.title;
+      
+      // Set Hero Title and Subtitle
+      const heroTitleEl = document.getElementById('hero-title');
+      const heroSubtitleEl = document.getElementById('hero-subtitle');
+      if (heroTitleEl) heroTitleEl.textContent = ROUTE_CONFIG.title;
+      if (heroSubtitleEl) heroSubtitleEl.textContent = ROUTE_CONFIG.subtitle;
+      
+      // Render Route Flow Chart
+      const flowContainer = document.getElementById('route-flow');
+      if (flowContainer) {
+        flowContainer.innerHTML = ROUTE_CONFIG.route.map((item, index) => `
+          <span class="route-node">${item.name}</span>
+          ${index < ROUTE_CONFIG.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
+        `).join('');
+      }
+
+      // Populate guide-city dropdown select in modal
+      const citySelect = document.getElementById('guide-city');
+      if (citySelect) {
+        citySelect.innerHTML = ROUTE_CONFIG.route
+          .filter(r => !r.isTransitOnly)
+          .map(r => `<option value="${r.name}">${r.name}</option>`)
+          .join('');
+      }
+    }
 
     // Navigation Tabs logic
     function initTabs() {
@@ -470,7 +739,7 @@
 
     // Render city filter buttons dynamically
     function renderCityFilters() {
-      const cities = ['全部', '广州', '揭阳', '潮州', '汕头', '东山岛', '泉州'];
+      const cities = ['全部', ...ROUTE_CONFIG.route.filter(r => !r.isTransitOnly).map(r => r.name)];
       cityFilters.innerHTML = '';
       cities.forEach(city => {
         const btn = document.createElement('button');
@@ -522,21 +791,26 @@
         } else if (t.includes('面') || t.includes('粉') || t.includes('粿') || t.includes('粥') || t.includes('丸')) {
           cardImg = 'images/food_snack.webp';
         } else {
-          cardImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+          cardImg = getCityImage(item.city);
         }
         
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img class="card-img" src="${cardImg}" alt="${item.name}" loading="lazy">
-            <button class="icon-btn edit-card-btn" onclick="openEditCardModal('eat', ${EAT_DATA.indexOf(item)})" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
-              <i class="fa-solid fa-pencil"></i>
-            </button>
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 6px;">
+              <button class="icon-btn edit-card-btn" onclick="openGuideItemModal('eat', ${item.id})" style="position: static; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+              <button class="icon-btn delete-card-btn" onclick="deleteGuideItem(${item.id}, 'eat')" style="background: rgba(220, 53, 69, 0.8); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
             <span class="card-city-badge">${item.city}</span>
           </div>
           <div class="card-content">
             <h4 class="card-title">
               ${item.name}
-              ${item.isSpecial ? '<span class="card-tag">生腌专题</span>' : ''}
+              ${item.is_special || item.isSpecial ? '<span class="card-tag">生腌专题</span>' : ''}
             </h4>
             <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(item.city + ' ' + item.name)}" target="_blank" class="card-address">
               <i class="fa-solid fa-location-dot"></i>
@@ -589,15 +863,20 @@
         } else if (n.includes('桥')) {
           cardImg = 'images/chaozhou_bridge.webp';
         } else {
-          cardImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+          cardImg = getCityImage(item.city);
         }
         
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img class="card-img" src="${cardImg}" alt="${item.name}" loading="lazy">
-            <button class="icon-btn edit-card-btn" onclick="openEditCardModal('play', ${PLAY_DATA.indexOf(item)})" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
-              <i class="fa-solid fa-pencil"></i>
-            </button>
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 6px;">
+              <button class="icon-btn edit-card-btn" onclick="openGuideItemModal('play', ${item.id})" style="position: static; background: rgba(0,0,0,0.6); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+              <button class="icon-btn delete-card-btn" onclick="deleteGuideItem(${item.id}, 'play')" style="background: rgba(220, 53, 69, 0.8); color: white; width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
             <span class="card-city-badge">${item.city}</span>
           </div>
           <div class="card-content">
@@ -607,12 +886,14 @@
               <span>${item.address}</span>
             </a>
             <p class="card-description">${item.desc}</p>
+            ${item.avoid ? `
             <div class="avoid-box">
               <div class="avoid-title">
                 <i class="fa-solid fa-triangle-exclamation"></i> 避坑指南
               </div>
               <p>${item.avoid}</p>
             </div>
+            ` : ''}
           </div>
         `;
         playGrid.appendChild(card);
@@ -689,10 +970,10 @@
     // Render Stay Tab Cards (Regions and maps)
     function renderStayTab() {
       stayList.innerHTML = '';
-      STAY_DATA.forEach(item => {
+      getStayData().forEach(item => {
         const container = document.createElement('div');
         container.className = 'stay-card';
-        const stayImg = IMAGE_MAPPING[item.city] || 'images/hero_banner.webp';
+        const stayImg = getCityImage(item.city);
         
         let hotelsHtml = '';
         const cityHotels = bookedHotels.filter(h => h.city === item.city);
