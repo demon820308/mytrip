@@ -560,6 +560,18 @@
       return pwd || '';
     }
 
+    // Helper to display toast notifications
+    function showToast(msg) {
+      const toastEl = document.getElementById('toast');
+      if (toastEl) {
+        toastEl.innerText = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => {
+          toastEl.classList.remove('show');
+        }, 2500);
+      }
+    }
+
     let EAT_DATA = JSON.parse(JSON.stringify(DEFAULT_EAT_DATA));
     let PLAY_DATA = JSON.parse(JSON.stringify(DEFAULT_PLAY_DATA));
 
