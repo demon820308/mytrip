@@ -7,6 +7,12 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
 
@@ -352,6 +358,29 @@
           <button type="button" class="btn btn-secondary" onclick="showTripActions()">返回</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Map Selector Action Sheet Modal -->
+  <div id="map-selector-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:2000; display:flex; justify-content:center; align-items:flex-end;">
+    <div style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:pointer;" onclick="closeMapSelector()"></div>
+    <div class="action-sheet" style="position:relative; width:100%; max-width:500px; background:var(--panel-bg); border-top-left-radius:16px; border-top-right-radius:16px; border:1px solid var(--panel-border); border-bottom:none; box-shadow:0 -4px 20px rgba(0,0,0,0.25); z-index:2001; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="width:40px; height:4px; border-radius:2px; background:rgba(128,128,128,0.3); margin:12px auto 8px auto;"></div>
+      <h3 style="text-align:center; margin:10px 0 20px 0; font-size:1.1rem; font-weight:600; color:var(--text-primary);">🗺️ 请选择地图导航</h3>
+      <div style="display:flex; flex-direction:column; gap:8px; padding:0 20px 30px 20px;">
+        <a id="map-link-amap" target="_blank" onclick="closeMapSelector()" class="btn btn-secondary" style="justify-content:center; text-decoration:none; padding:12px; font-weight:500; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-location-arrow"></i> 🧭 高德地图
+        </a>
+        <a id="map-link-baidu" target="_blank" onclick="closeMapSelector()" class="btn btn-secondary" style="justify-content:center; text-decoration:none; padding:12px; font-weight:500; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-globe"></i> 🌐 百度地图
+        </a>
+        <a id="map-link-tencent" target="_blank" onclick="closeMapSelector()" class="btn btn-secondary" style="justify-content:center; text-decoration:none; padding:12px; font-weight:500; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-map"></i> 🗺️ 腾讯地图
+        </a>
+        <button onclick="closeMapSelector()" class="btn" style="background:transparent; color:var(--text-secondary); border:1px solid var(--panel-border); justify-content:center; padding:12px; margin-top:6px; font-weight:500; width:100%;">
+          取消
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1008,7 +1037,7 @@
               ${item.name}
               ${item.is_special || item.isSpecial ? '<span class="card-tag">生腌专题</span>' : ''}
             </h4>
-            <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(item.city + ' ' + item.name)}" target="_blank" class="card-address">
+            <a href="javascript:void(0)" onclick="openMapSelector(this.dataset.query)" data-query="${item.city} ${item.name}" class="card-address">
               <i class="fa-solid fa-location-dot"></i>
               <span>${item.address}</span>
             </a>
@@ -1078,7 +1107,7 @@
           </div>
           <div class="card-content">
             <h4 class="card-title">${item.name}</h4>
-            <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(item.city + ' ' + item.name)}" target="_blank" class="card-address">
+            <a href="javascript:void(0)" onclick="openMapSelector(this.dataset.query)" data-query="${item.city} ${item.name}" class="card-address">
               <i class="fa-solid fa-map-pin"></i>
               <span>${item.address}</span>
             </a>
@@ -1150,7 +1179,7 @@
               </button>
             </div>
             <div style="margin-top: 6px;">
-              <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(hotel.name + ' ' + hotel.address)}" target="_blank" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 4px; margin: 0;">
+              <a href="javascript:void(0)" onclick="openMapSelector(this.dataset.query)" data-query="${hotel.city} ${hotel.name}" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 4px; margin: 0;">
                 <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i>
                 <span>${hotel.address}</span>
               </a>
@@ -1190,7 +1219,7 @@
                     </button>
                   </div>
                   <div style="margin-top: 6px;">
-                    <a href="https://uri.amap.com/search?keyword=${encodeURIComponent(hotel.name + ' ' + hotel.address)}" target="_blank" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 4px; margin: 0;">
+                    <a href="javascript:void(0)" onclick="openMapSelector(this.dataset.query)" data-query="${hotel.city} ${hotel.name}" class="card-address" style="display: inline-flex; align-items: center; color: var(--accent); text-decoration: none; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 4px; margin: 0;">
                       <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i>
                       <span>${hotel.address}</span>
                     </a>
@@ -1218,9 +1247,9 @@
             <p class="card-description" style="margin-top: 10px;">${item.reason}</p>
             ${hotelsHtml}
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-              <a href="${item.link}" target="_blank" class="btn btn-secondary" style="width: auto;">
-                <i class="fa-solid fa-map-location"></i> 在高德地图中查看该区
-              </a>
+              <button onclick="openMapSelector(this.dataset.link)" data-link="${item.link}" class="btn btn-secondary" style="width: auto; cursor: pointer;">
+                <i class="fa-solid fa-map-location"></i> 在地图中查看该区
+              </button>
               <button class="btn" style="width: auto; background: var(--primary);" onclick="openAddHotelModal('${item.city}')">
                 <i class="fa-solid fa-plus"></i> 添加${item.city}住宿
               </button>
@@ -1682,6 +1711,30 @@
           toast.classList.remove('show');
         }, 2500);
       });
+    }
+
+    // --- Map Selector Modal Logic ---
+    function openMapSelector(keyword) {
+      if (!keyword) return;
+      let query = keyword;
+      if (keyword.startsWith('http')) {
+        try {
+          const url = new URL(keyword);
+          query = url.searchParams.get('query') || url.searchParams.get('keyword') || keyword;
+        } catch (e) {
+          query = keyword;
+        }
+      }
+      
+      document.getElementById('map-link-amap').href = `https://uri.amap.com/search?keyword=${encodeURIComponent(query)}`;
+      document.getElementById('map-link-baidu').href = `https://api.map.baidu.com/geocoder?address=${encodeURIComponent(query)}&output=html&src=webapp.mytrip`;
+      document.getElementById('map-link-tencent').href = `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(query)}&referer=mytrip`;
+      
+      document.getElementById('map-selector-modal').classList.remove('d-none');
+    }
+
+    function closeMapSelector() {
+      document.getElementById('map-selector-modal').classList.add('d-none');
     }
 
     // --- Trip Manager Modal Logic ---
