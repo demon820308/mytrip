@@ -755,6 +755,45 @@
       }
     });
 
+    function initRouteConfig() {
+      const config = getActiveTripConfig();
+      // Set Document Title
+      const titleEl = document.getElementById('site-title');
+      if (titleEl) titleEl.textContent = "🚄 " + config.title;
+      
+      // Set Hero Title and Subtitle
+      const heroTitleEl = document.getElementById('hero-title');
+      const heroSubtitleEl = document.getElementById('hero-subtitle');
+      if (heroTitleEl) heroTitleEl.textContent = config.title;
+      if (heroSubtitleEl) heroSubtitleEl.textContent = config.subtitle;
+      
+      // Render Route Flow Chart
+      const flowContainer = document.getElementById('route-flow');
+      if (flowContainer) {
+        flowContainer.innerHTML = config.route.map((item, index) => `
+          <span class="route-node">${item.name}</span>
+          ${index < config.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
+        `).join('');
+      }
+
+      // Populate guide-city dropdown select in modal
+      const citySelect = document.getElementById('guide-city');
+      if (citySelect) {
+        citySelect.innerHTML = config.route
+          .filter(r => !r.isTransitOnly)
+          .map(r => `<option value="${r.name}">${r.name}</option>`)
+          .join('');
+      }
+
+      // Populate trip selector options
+      const selector = document.getElementById('trip-selector');
+      if (selector) {
+        selector.innerHTML = TRIP_LIST.map(t => `
+          <option value="${t.id}" ${t.id === config.id ? 'selected' : ''}>${t.title}</option>
+        `).join('');
+      }
+    }
+
     // Navigation Tabs logic
     function initTabs() {
       const tabs = document.querySelectorAll('.tab-btn');
