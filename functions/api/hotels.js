@@ -1,16 +1,26 @@
 // Cloudflare Pages Function: /api/hotels
 // Handles GET (list), POST (add), DELETE (remove) for hotel bookings
 
+import { getAuthUser, readRequestBody, corsHeaders } from './_utils.js';
+
+export async function onRequestOptions() {
+  return new Response(null, { headers: corsHeaders });
+}
+
+async function checkTripOwner(db, tripId, userId) {
+  const trip = await db.prepare('SELECT owner_id FROM trips WHERE id = ?').bind(tripId).first();
+  return trip && (trip.owner_id === userId || trip.owner_id === null);
+}
+
+async function checkItemOwner(db, itemId, userId) {
+  const trip = await db.prepare('SELECT t.owner_id FROM booked_hotels h JOIN trips t ON h.trip_id = t.id WHERE h.id = ?').bind(itemId).first();
+  return trip && (trip.owner_id === userId || trip.owner_id === null);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const db = env.DB;
   const url = new URL(request.url);
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-password',
-  };
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,18 +32,21 @@ export async function onRequest(context) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  // Admin password check for write actions
-  const correctPassword = env.ADMIN_PASSWORD || '123456';
-  if (['POST', 'DELETE'].includes(request.method)) {
-    const inputPassword = request.headers.get('x-admin-password');
-    if (inputPassword !== correctPassword) {
-      return json({ error: '密码错误，无权修改数据' }, 403);
-    }
+  // Verify Auth for ALL requests
+  const user = await getAuthUser(request, env);
+  if (!user) {
+    return json({ error: '未登录或登录已过期' }, 401);
   }
 
   try {
     if (request.method === 'GET') {
-      const tripId = url.searchParams.get('trip_id') || 'qianmin';
+      const tripId = url.searchParams.get('trip_id');
+      if (!tripId) return json({ error: 'Missing trip_id' }, 400);
+
+      if (!(await checkTripOwner(db, tripId, user.userId))) {
+        return json({ error: '无权访问此行程' }, 403);
+      }
+
       const { results } = await db
         .prepare('SELECT * FROM booked_hotels WHERE trip_id = ? ORDER BY checkin, created_at')
         .bind(tripId)
@@ -42,12 +55,16 @@ export async function onRequest(context) {
     }
 
     if (request.method === 'POST') {
-      const body = await request.json();
+      const body = await readRequestBody(request);
       const { city, name, checkin, checkout, address, price, trip_id } = body;
-      const tripId = trip_id || 'qianmin';
+      const tripId = trip_id;
       
-      if (!city || !name || !checkin || !checkout || !address || price === undefined) {
+      if (!city || !name || !checkin || !checkout || !address || price === undefined || !tripId) {
         return json({ error: 'Missing required fields' }, 400);
+      }
+
+      if (!(await checkTripOwner(db, tripId, user.userId))) {
+        return json({ error: '无权修改此行程' }, 403);
       }
 
       const result = await db
@@ -62,6 +79,11 @@ export async function onRequest(context) {
     if (request.method === 'DELETE') {
       const id = url.searchParams.get('id');
       if (!id) return json({ error: 'id required' }, 400);
+      
+      if (!(await checkItemOwner(db, id, user.userId))) {
+        return json({ error: '无权删除此数据' }, 403);
+      }
+
       await db.prepare('DELETE FROM booked_hotels WHERE id = ?').bind(id).run();
       return json({ ok: true });
     }

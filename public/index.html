@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="site-title">🚄 黔闽市井行程指南</title>
+  <title id="site-title">🚄 漫途 · 私人行程手账</title>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -12,14 +12,37 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
+    @media (max-width: 600px) {
+      #top-auth-overlay {
+        top: 10px !important;
+        right: 10px !important;
+        transform: scale(0.8);
+        transform-origin: top right;
+      }
+      .hero {
+        padding-top: 30px;
+      }
+    }
   </style>
 </head>
 <body>
 
+  <!-- Top Right Auth Overlay -->
+  <div id="top-auth-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; align-items: center; white-space: nowrap;">
+    <div id="auth-user-info" style="display: none; align-items: center; gap: 8px; font-size: 0.95rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 6px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap;">
+      <i class="fa-solid fa-circle-user" style="color: var(--primary);"></i>
+      <span id="auth-username" style="font-weight: 600; color: var(--text-primary); white-space: nowrap;"></span>
+      <button class="btn btn-secondary" onclick="logout()" style="padding: 4px 8px; font-size: 0.85rem; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; white-space: nowrap;"><i class="fa-solid fa-arrow-right-from-bracket"></i> 退出</button>
+    </div>
+    <div id="auth-login-btn" style="display: flex;">
+      <button class="btn" onclick="showAuthModal()" style="padding: 8px 20px; font-size: 0.95rem; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap;"><i class="fa-solid fa-right-to-bracket"></i> 登录 / 注册</button>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="hero">
     <div class="hero-content">
-      <h1 class="hero-title" id="hero-title">黔闽市井行程指南</h1>
+      <h1 class="hero-title" id="hero-title">漫途 · 私人行程手账</h1>
       <p class="hero-subtitle" id="hero-subtitle"></p>
       
       <div class="route-flow" id="route-flow">
@@ -203,6 +226,40 @@
   <!-- Toast -->
   <div class="toast" id="toast">复制成功，可直接分享！</div>
 
+  
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center;">
+    <div class="form-card" style="width: 90%; max-width: 400px; padding: 30px 20px;">
+      <h3 class="form-title" style="text-align: center; margin-bottom: 25px; font-size: 1.3rem;"><i class="fa-solid fa-passport" style="color: var(--primary);"></i> 通行凭证</h3>
+      
+      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+        <button id="tab-login" class="tab-btn active" style="flex:1" onclick="switchAuthTab('login')">登 录</button>
+        <button id="tab-register" class="tab-btn" style="flex:1" onclick="switchAuthTab('register')">注 册</button>
+      </div>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <input type="hidden" id="auth-action" value="login">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input type="text" id="auth-username-input" class="form-input" required placeholder="输入账号名">
+        </div>
+        <div class="form-group">
+          <label class="form-label">密 码</label>
+          <input type="password" id="auth-password-input" class="form-input" required placeholder="输入密码">
+        </div>
+        <div class="form-group" id="auth-display-name-group" style="display: none;">
+          <label class="form-label">昵 称 (选填)</label>
+          <input type="text" id="auth-display-name-input" class="form-input" placeholder="输入显示昵称">
+        </div>
+        
+        <div style="display:flex; flex-direction: column; gap:10px; margin-top:30px;">
+          <button type="submit" class="btn" style="width: 100%; padding: 10px;" id="auth-submit-btn">登录并同步数据</button>
+          <button type="button" class="btn btn-secondary" style="width: 100%; padding: 10px; background: transparent; border: none;" onclick="closeAuthModal()">暂不登录 (仅查看本地缓存)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Add/Edit Guide Item Modal -->
   <div id="guide-item-modal" class="d-none" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center;">
     <div class="form-card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
@@ -237,6 +294,11 @@
         <div class="form-group">
           <label class="form-label">推荐描述</label>
           <textarea id="guide-desc" class="form-input" style="height: 100px;" required placeholder="写写口味特色、招牌菜推荐等..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">自定义图片链接 <span style="opacity:0.6;font-weight:400;font-size:0.8rem;">（可选，留空则使用默认逻辑）</span></label>
+          <input type="url" id="guide-image" class="form-input" placeholder="例如：https://example.com/pic.jpg">
         </div>
         
         <!-- Only for PLAY -->
@@ -337,14 +399,16 @@
         </div>
         <div class="form-group">
           <label class="form-label">背景大图</label>
-          <select id="trip-banner-input" class="form-input">
-            <option value="images/hero_banner.webp">默认横幅 (hero_banner.webp)</option>
-            <option value="images/guangzhou.webp">广州 (guangzhou.webp)</option>
-            <option value="images/chaozhou_scenery.webp">潮州 (chaozhou_scenery.webp)</option>
-            <option value="images/shantou_shengyin.webp">汕头 (shantou_shengyin.webp)</option>
-            <option value="images/dongshan_road.webp">东山岛 (dongshan_road.webp)</option>
-            <option value="images/quanzhou_temple.webp">泉州 (quanzhou_temple.webp)</option>
-          </select>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 240px; overflow-y: auto; border: 1px solid var(--panel-border); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);" id="banner-grid-selector">
+            <!-- Rendered by JS -->
+          </div>
+          <input type="hidden" id="trip-banner-input" value="images/hero_banner.webp">
+          
+          <!-- Real-time Preview Container -->
+          <div id="banner-preview-box" style="margin-top: 10px; border-radius: 8px; height: 100px; background-size: cover; background-position: center; border: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.35);"></div>
+            <span style="color: white; z-index: 1; font-size: 0.9rem; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">背景大图实时预览</span>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">路线城市</label>
@@ -386,7 +450,7 @@
 
   <!-- Foot -->
   <footer class="site-footer">
-    <p>© 2026 黔闽市井行程指南 · 全线明码标价市井路线</p>
+    <p>© 2026 漫途 · 私人旅行手账</p>
     <p style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">Cloudflare Pages & D1 Real-time Powered</p>
   </footer>
 
@@ -470,7 +534,7 @@
     const DEFAULT_TRIP_LIST = [
       {
         id: "qianmin",
-        title: "黔闽市井行程指南",
+        title: "漫途 · 私人行程手账",
         subtitle: "贵州都匀 ➔ 广州 ➔ 揭阳 ➔ 潮州 ➔ 汕头 ➔ 东山岛 ➔ 泉州 ➔ 三明",
         bannerImage: "images/hero_banner.webp",
         route: [
@@ -560,6 +624,15 @@
 
     // Get active trip configuration dynamically
     function getActiveTripConfig() {
+      if (!TRIP_LIST || TRIP_LIST.length === 0) {
+        return {
+          id: 'empty',
+          title: '漫途 · 私人旅行手账',
+          subtitle: '暂无行程 · 记录足迹，开启您的下一段美好旅程。',
+          bannerImage: 'images/hero_banner.webp',
+          route: []
+        };
+      }
       const storedId = localStorage.getItem('gdx_current_trip_id') || DEFAULT_TRIP_ID;
       const config = TRIP_LIST.find(t => t.id === storedId);
       return config || TRIP_LIST[0];
@@ -585,16 +658,131 @@
     }
 
     // Admin authorization session prompt
-    function getAdminPassword() {
-      let pwd = sessionStorage.getItem('gdx_admin_password');
-      if (!pwd) {
-        pwd = prompt('此敏感写入操作需要输入管理员密码（默认为 123456）：');
-        if (pwd) {
-          sessionStorage.setItem('gdx_admin_password', pwd);
-        }
-      }
-      return pwd || '';
+    
+    // Auth & JWT Logic
+    function getToken() {
+      return localStorage.getItem('gdx_auth_token') || '';
     }
+
+    function setToken(token) {
+      if (token) {
+        localStorage.setItem('gdx_auth_token', token);
+      } else {
+        localStorage.removeItem('gdx_auth_token');
+      }
+    }
+
+    function showAuthModal() {
+      document.getElementById('auth-modal').classList.remove('d-none');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('d-none');
+    }
+
+    function switchAuthTab(action) {
+      document.getElementById('auth-action').value = action;
+      if (action === 'login') {
+        document.getElementById('tab-login').classList.add('active');
+        document.getElementById('tab-register').classList.remove('active');
+        document.getElementById('auth-display-name-group').style.display = 'none';
+        document.getElementById('auth-submit-btn').innerText = '登录并同步数据';
+      } else {
+        document.getElementById('tab-register').classList.add('active');
+        document.getElementById('tab-login').classList.remove('active');
+        document.getElementById('auth-display-name-group').style.display = 'block';
+        document.getElementById('auth-submit-btn').innerText = '注册新账号';
+      }
+    }
+
+    function logout() {
+      setToken('');
+      localStorage.removeItem('gdx_current_trip_id'); // clear current trip
+      location.reload();
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const action = document.getElementById('auth-action').value;
+      const username = document.getElementById('auth-username-input').value;
+      const password = document.getElementById('auth-password-input').value;
+      const displayName = document.getElementById('auth-display-name-input').value;
+
+      try {
+        // Normal fetch for auth itself
+        const res = await fetch(`/api/auth?action=${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, display_name: displayName })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || '认证失败');
+        }
+
+        if (action === 'register') {
+          showToast('注册成功，请登录');
+          switchAuthTab('login');
+        } else {
+          showToast('登录成功');
+          setToken(data.token);
+          closeAuthModal();
+          location.reload(); // Reload to fetch data with token
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Wrapped fetch that automatically attaches JWT
+    async function apiFetch(url, options = {}) {
+      const token = getToken();
+      if (!options.headers) options.headers = {};
+      if (token) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        setToken('');
+        showAuthModal();
+        throw new Error('认证失效，请重新登录');
+      }
+      if (res.status === 403) {
+        throw new Error('无权访问此数据');
+      }
+      return res;
+    }
+
+    // Check auth status on startup
+    async function checkAuthStatus() {
+      const token = getToken();
+      if (!token) {
+        showAuthModal();
+        return false;
+      }
+      try {
+        const res = await fetch('/api/auth?action=me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('auth-login-btn').style.display = 'none';
+          document.getElementById('auth-user-info').style.display = 'flex';
+          document.getElementById('auth-username').innerText = data.user.displayName || data.user.username;
+          return true;
+        } else {
+          setToken('');
+          showAuthModal();
+          return false;
+        }
+      } catch (e) {
+        // network error, allow local offline mode
+        return true;
+      }
+    }
+
 
     // Helper to display toast notifications
     function showToast(msg) {
@@ -614,7 +802,7 @@
     async function loadGuides() {
       const config = getActiveTripConfig();
       try {
-        const res = await fetch(`/api/guides?trip_id=${config.id}`);
+        const res = await apiFetch(`/api/guides?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
@@ -671,6 +859,7 @@
           document.getElementById('guide-name').value = item.name;
           document.getElementById('guide-address').value = item.address;
           document.getElementById('guide-desc').value = item.desc;
+          document.getElementById('guide-image').value = item.image || '';
           if (category === 'eat') {
             document.getElementById('guide-type').value = item.type || '';
             document.getElementById('guide-is-special').checked = !!item.is_special || !!item.isSpecial;
@@ -689,8 +878,6 @@
 
     async function handleSaveGuideItem(e) {
       e.preventDefault();
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const config = getActiveTripConfig();
       const id = document.getElementById('guide-id').value;
@@ -699,8 +886,9 @@
       const name = document.getElementById('guide-name').value.trim();
       const address = document.getElementById('guide-address').value.trim();
       const desc = document.getElementById('guide-desc').value.trim();
+      const image = document.getElementById('guide-image').value.trim();
 
-      const itemData = { category, city, name, address, desc, trip_id: config.id };
+      const itemData = { category, city, name, address, desc, trip_id: config.id, image: image || null };
 
       if (category === 'eat') {
         itemData.type = document.getElementById('guide-type').value.trim();
@@ -719,20 +907,14 @@
 
       try {
         const method = isEdit ? 'PUT' : 'POST';
-        const res = await fetch('/api/guides', {
+        const res = await apiFetch('/api/guides', {
           method,
           headers: { 
             'Content-Type': 'application/json',
-            'x-admin-password': pwd
+            
           },
           body: JSON.stringify(itemData)
         });
-
-        if (res.status === 403) {
-          sessionStorage.removeItem('gdx_admin_password');
-          showToast('密码错误，操作被拒绝！');
-          return;
-        }
 
         if (!res.ok) throw new Error('API save failed');
 
@@ -774,8 +956,6 @@
 
     async function deleteGuideItem(id, category) {
       if (!confirm(`确定要删除这个${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const config = getActiveTripConfig();
       const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
@@ -789,15 +969,10 @@
         if (typeof id === 'number' && id > 1000000000000) {
           // Local fallback ID
         } else {
-          const res = await fetch(`/api/guides?id=${id}`, { 
+          const res = await apiFetch(`/api/guides?id=${id}`, { 
             method: 'DELETE',
-            headers: { 'x-admin-password': pwd }
+            headers: { }
           });
-          if (res.status === 403) {
-            sessionStorage.removeItem('gdx_admin_password');
-            showToast('密码错误，操作被拒绝！');
-            return;
-          }
           if (!res.ok) throw new Error('API delete failed');
         }
       } catch (e) {
@@ -842,7 +1017,12 @@
 
     // Init App
     window.addEventListener('DOMContentLoaded', async () => {
+      
+      const isAuth = await checkAuthStatus();
+      if (!isAuth) return; // Stop loading if not authed
+      
       await loadTripConfigurations();
+
       initRouteConfig();
       renderCityFilters();
       renderEatTab();
@@ -870,7 +1050,7 @@
 
     async function loadTripConfigurations() {
       try {
-        const res = await fetch('/api/trips');
+        const res = await apiFetch('/api/trips');
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
@@ -910,10 +1090,20 @@
       // Render Route Flow Chart
       const flowContainer = document.getElementById('route-flow');
       if (flowContainer) {
-        flowContainer.innerHTML = config.route.map((item, index) => `
-          <span class="route-node">${item.name}</span>
-          ${index < config.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
-        `).join('');
+        if (config.id === 'empty') {
+          flowContainer.style.background = 'transparent';
+          flowContainer.style.boxShadow = 'none';
+          flowContainer.style.padding = '0';
+          flowContainer.innerHTML = '<button class="btn" onclick="openTripManagerModal()" style="font-size: 1.15rem; padding: 14px 40px; border-radius: 40px; margin-top: 20px; box-shadow: 0 8px 25px rgba(222, 116, 86, 0.35); background: var(--primary); color: white; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"><i class="fa-solid fa-plane-departure"></i> 立即开启第一段行程</button>';
+        } else {
+          flowContainer.style.background = 'var(--panel-bg)';
+          flowContainer.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.06)';
+          flowContainer.style.padding = '15px 30px';
+          flowContainer.innerHTML = config.route.map((item, index) => `
+            <span class="route-node">${item.name}</span>
+            ${index < config.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
+          `).join('');
+        }
       }
 
       // Populate guide-city dropdown select in modal
@@ -928,9 +1118,23 @@
       // Populate trip selector options
       const selector = document.getElementById('trip-selector');
       if (selector) {
-        selector.innerHTML = TRIP_LIST.map(t => `
-          <option value="${t.id}" ${t.id === config.id ? 'selected' : ''}>${t.title}</option>
-        `).join('');
+        if (config.id === 'empty') {
+          selector.innerHTML = '<option value="empty">请新建行程</option>';
+          selector.disabled = true;
+        } else {
+          selector.disabled = false;
+          selector.innerHTML = TRIP_LIST.map(t => `
+            <option value="${t.id}" ${t.id === config.id ? 'selected' : ''}>${t.title}</option>
+          `).join('');
+        }
+      }
+
+      // Toggle main UI based on empty state
+      const mainContainer = document.querySelector('.main-container');
+      if (config.id === 'empty') {
+        if (mainContainer) mainContainer.style.display = 'none';
+      } else {
+        if (mainContainer) mainContainer.style.display = 'block';
       }
     }
 
@@ -1128,7 +1332,7 @@
        async function loadHotels() {
       const config = getActiveTripConfig();
       try {
-        const res = await fetch(`/api/hotels?trip_id=${config.id}`);
+        const res = await apiFetch(`/api/hotels?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
@@ -1271,8 +1475,6 @@
 
     async function handleAddHotel(e) {
       e.preventDefault();
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const config = getActiveTripConfig();
       const city = document.getElementById('hotel-city').value;
@@ -1285,20 +1487,14 @@
       const hotelData = { city, name, checkin, checkout, address, price, trip_id: config.id };
 
       try {
-        const res = await fetch('/api/hotels', {
+        const res = await apiFetch('/api/hotels', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'x-admin-password': pwd
+            
           },
           body: JSON.stringify(hotelData)
         });
-
-        if (res.status === 403) {
-          sessionStorage.removeItem('gdx_admin_password');
-          showToast('密码错误，保存失败！');
-          return;
-        }
 
         if (!res.ok) throw new Error('API save failed');
         const newHotel = await res.json();
@@ -1318,9 +1514,6 @@
     }
 
     async function deleteHotel(id) {
-      const pwd = getAdminPassword();
-      if (!pwd) return;
-
       const config = getActiveTripConfig();
       const index = bookedHotels.findIndex(h => h.id == id);
       if (index === -1) return;
@@ -1332,15 +1525,10 @@
         if (typeof id === 'number' && id > 1000000000000) {
           // Local fallback ID
         } else {
-          const res = await fetch(`/api/hotels?id=${id}`, { 
+          const res = await apiFetch(`/api/hotels?id=${id}`, { 
             method: 'DELETE',
-            headers: { 'x-admin-password': pwd }
+            headers: { }
           });
-          if (res.status === 403) {
-            sessionStorage.removeItem('gdx_admin_password');
-            showToast('密码错误，操作被拒绝！');
-            return;
-          }
           if (!res.ok) throw new Error('API delete failed');
         }
       } catch (e) {
@@ -1358,7 +1546,7 @@
       if (loader) loader.style.display = 'block';
       timelineList.innerHTML = '';
       try {
-        const res = await fetch(`/api/segments?trip_id=${config.id}`);
+        const res = await apiFetch(`/api/segments?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
@@ -1434,8 +1622,6 @@
     // Submit segment handler
     async function handleAddSegment(e) {
       e.preventDefault();
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const config = getActiveTripConfig();
       const from_st = document.getElementById('from-st').value.trim();
@@ -1462,19 +1648,14 @@
         if (editingId !== null) {
           newSegment.id = editingId;
           try {
-            const res = await fetch('/api/segments', {
+            const res = await apiFetch('/api/segments', {
               method: 'PUT',
               headers: { 
                 'Content-Type': 'application/json',
-                'x-admin-password': pwd
+                
               },
               body: JSON.stringify(newSegment)
             });
-            if (res.status === 403) {
-              sessionStorage.removeItem('gdx_admin_password');
-              showToast('密码错误，修改失败！');
-              return;
-            }
             if (!res.ok) throw new Error('API update failed');
           } catch (err) {
             console.error(err);
@@ -1490,19 +1671,14 @@
         // Add mode
         newSegment.sort_order = segments.length + 1;
         try {
-          const res = await fetch('/api/segments', {
+          const res = await apiFetch('/api/segments', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'x-admin-password': pwd
+              
             },
             body: JSON.stringify(newSegment)
           });
-          if (res.status === 403) {
-            sessionStorage.removeItem('gdx_admin_password');
-            showToast('密码错误，添加失败！');
-            return;
-          }
           if (!res.ok) throw new Error('API post failed');
         } catch (err) {
           console.warn('API post failed, saving to LocalStorage instead.');
@@ -1520,21 +1696,13 @@
 
     // Delete segment
     async function deleteSegment(idOrIndex, isRemote) {
-      const pwd = getAdminPassword();
-      if (!pwd) return;
-
       const config = getActiveTripConfig();
       if (isRemote) {
         try {
-          const res = await fetch(`/api/segments?id=${idOrIndex}`, { 
+          const res = await apiFetch(`/api/segments?id=${idOrIndex}`, { 
             method: 'DELETE',
-            headers: { 'x-admin-password': pwd }
+            headers: { }
           });
-          if (res.status === 403) {
-            sessionStorage.removeItem('gdx_admin_password');
-            showToast('密码错误，操作被拒绝！');
-            return;
-          }
           if (!res.ok) throw new Error('API delete failed');
         } catch (e) {
           console.error(e);
@@ -1630,23 +1798,17 @@
     // Reset default DB content
     async function resetDefaultSegments() {
       if (!confirm('确定要重置回默认的行程吗？你的自定义添加将会被清空。')) return;
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const config = getActiveTripConfig();
       try {
         // Clear remote
         for (const seg of segments) {
           if (seg.id) {
-            const res = await fetch(`/api/segments?id=${seg.id}`, { 
+            const res = await apiFetch(`/api/segments?id=${seg.id}`, { 
               method: 'DELETE',
-              headers: { 'x-admin-password': pwd }
+              headers: { }
             });
-            if (res.status === 403) {
-              sessionStorage.removeItem('gdx_admin_password');
-              showToast('密码错误，重置失败！');
-              return;
-            }
+
           }
         }
         localStorage.removeItem(`gdx_segments_${config.id}`);
@@ -1667,19 +1829,12 @@
     async function clearAllGuides(category) {
       const config = getActiveTripConfig();
       if (!confirm(`确定要清空该行程的所有${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       try {
-        const res = await fetch(`/api/guides?clear=all&category=${category}&trip_id=${config.id}`, {
+        const res = await apiFetch(`/api/guides?clear=all&category=${category}&trip_id=${config.id}`, {
           method: 'DELETE',
-          headers: { 'x-admin-password': pwd }
+          headers: { }
         });
-        if (res.status === 403) {
-          sessionStorage.removeItem('gdx_admin_password');
-          showToast('密码错误，操作被拒绝！');
-          return;
-        }
         if (!res.ok) throw new Error('Clear request failed');
         
         // Sync locally
@@ -1823,28 +1978,89 @@
       const subtitleInput = document.getElementById('trip-subtitle-input');
       subtitleInput.dataset.manualEdit = '';
 
+      // Define standard banner choices (including generated beautiful ones)
+      const bannerChoices = [
+        { label: '默认横幅', value: 'images/hero_banner.webp' },
+        { label: '广州', value: 'images/guangzhou.webp' },
+        { label: '潮州', value: 'images/chaozhou_scenery.webp' },
+        { label: '汕头', value: 'images/shantou_scenery.webp' },
+        { label: '东山岛', value: 'images/dongshan_scenery.webp' },
+        { label: '泉州', value: 'images/quanzhou_scenery.webp' },
+        { label: '桂林山水', value: 'images/banner_1_1783750825218.png' },
+        { label: '大理洱海', value: 'images/banner_2_1783750833284.png' },
+        { label: '京都樱花', value: 'images/banner_3_1783750843246.png' },
+        { label: '阿尔卑斯', value: 'images/banner_4_1783750851336.png' },
+        { label: '圣托里尼', value: 'images/banner_5_1783750896849.png' },
+        { label: '极光之夜', value: 'images/banner_6_1783750903963.png' },
+        { label: '托斯卡纳', value: 'images/banner_7_1783750911557.png' },
+        { label: '巴厘岛日落', value: 'images/banner_8_1783750919648.png' },
+        { label: '大峡谷', value: 'images/banner_9_1783750936395.png' },
+        { label: '普罗旺斯', value: 'images/banner_10_1783750943849.png' },
+        { label: '挪威峡湾', value: 'images/banner_11_1783750953202.png' },
+        { label: '东京霓虹', value: 'images/banner_12_1783750960827.png' },
+        { label: '巴黎铁塔', value: 'images/banner_13_1783750977986.png' },
+        { label: '曼哈顿桥', value: 'images/banner_14_1783750986024.png' },
+        { label: '土耳其热气球', value: 'images/banner_15_1783750992656.png' },
+        { label: '瑞士瀑布', value: 'images/banner_16_1783751000177.png' },
+        { label: '威尼斯水道', value: 'images/banner_17_1783751017802.png' },
+        { label: '冰岛瀑布', value: 'images/banner_18_1783751025996.png' }
+      ];
+
+      // Render banner grid selector
+      const grid = document.getElementById('banner-grid-selector');
+      let activeBanner = 'images/hero_banner.webp';
+
       if (action === 'add') {
         idInput.disabled = false;
         idInput.value = '';
         document.getElementById('trip-title-input').value = '';
         subtitleInput.value = '';
-        document.getElementById('trip-banner-input').value = 'images/hero_banner.webp';
       } else {
-        // Edit mode — pre-fill from current active config
         idInput.disabled = true;
         const config = getActiveTripConfig();
         idInput.value = config.id;
         document.getElementById('trip-title-input').value = config.title;
         subtitleInput.value = config.subtitle;
-        subtitleInput.dataset.manualEdit = '1'; // don't overwrite user's existing subtitle
-        // Set banner dropdown
-        const bannerSel = document.getElementById('trip-banner-input');
-        [...bannerSel.options].forEach(o => { o.selected = o.value === config.bannerImage; });
-        // Render existing cities
+        subtitleInput.dataset.manualEdit = '1';
+        activeBanner = config.bannerImage || 'images/hero_banner.webp';
         (config.route || []).forEach(r => addCityRow(r));
       }
 
-      // Let subtitle re-auto-generate if it's a new trip
+      function updateBannerSelection(val) {
+        document.getElementById('trip-banner-input').value = val;
+        // Update selection UI highlight
+        const cards = grid.querySelectorAll('.banner-card');
+        cards.forEach(card => {
+          if (card.dataset.value === val) {
+            card.style.border = '2px solid var(--primary)';
+            card.style.outline = 'none';
+          } else {
+            card.style.border = '2px solid transparent';
+          }
+        });
+        // Update preview box
+        const preview = document.getElementById('banner-preview-box');
+        preview.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('${val}')`;
+      }
+
+      grid.innerHTML = bannerChoices.map(item => `
+        <div class="banner-card" data-value="${item.value}" style="cursor: pointer; border-radius: 6px; border: 2px solid transparent; overflow: hidden; position: relative; height: 60px; background-image: url('${item.value}'); background-size: cover; background-position: center; transition: border-color 0.2s;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 0.75rem; text-align: center; padding: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${item.label}
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handler to cards
+      grid.querySelectorAll('.banner-card').forEach(card => {
+        card.addEventListener('click', () => {
+          updateBannerSelection(card.dataset.value);
+        });
+      });
+
+      // Select initial active banner
+      updateBannerSelection(activeBanner);
+
       document.getElementById('trip-subtitle-input').addEventListener('input', function() {
         this.dataset.manualEdit = this.value ? '1' : '';
       }, { once: true });
@@ -1852,8 +2068,6 @@
 
     async function saveTripConfig(e) {
       e.preventDefault();
-      const pwd = getAdminPassword();
-      if (!pwd) return;
 
       const action = document.getElementById('trip-form-action').value;
       const id = document.getElementById('trip-id-input').value.trim().toLowerCase();
@@ -1888,17 +2102,12 @@
 
       try {
         const method = action === 'add' ? 'POST' : 'PUT';
-        const res = await fetch('/api/trips', {
+        const res = await apiFetch('/api/trips', {
           method,
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+          headers: { 'Content-Type': 'application/json', },
           body: JSON.stringify(tripData)
         });
 
-        if (res.status === 403) {
-          sessionStorage.removeItem('gdx_admin_password');
-          showToast('密码错误，无权操作！');
-          return;
-        }
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.error || '保存行程配置失败');
@@ -1916,33 +2125,19 @@
       const config = getActiveTripConfig();
       if (!confirm(`确定要彻底删除当前行程“${config.title}”吗？此操作将永久清空该行程下的所有住宿、交通和美食攻略，且不可恢复！`)) return;
       
-      const pwd1 = prompt('⚠️ 请输入管理员密码以确认删除：');
-      if (!pwd1) return;
-      
-      const pwd2 = prompt('⚠️ 敏感数据清除！请再次输入管理员密码以最终确认：');
-      if (!pwd2) {
-        alert('取消删除。');
-        return;
-      }
-      
-      if (pwd1 !== pwd2) {
-        alert('两次输入的密码不一致，删除操作被终止。');
+      const confirmInput = prompt(`⚠️ 行程删除非常敏感！请输入该行程的 ID "${config.id}" 以最终确认删除：`);
+      if (confirmInput !== config.id) {
+        alert('行程 ID 不匹配，取消删除。');
         return;
       }
 
       try {
-        const res = await fetch(`/api/trips?id=${config.id}`, {
+        const res = await apiFetch(`/api/trips?id=${config.id}`, {
           method: 'DELETE',
           headers: {
-            'x-admin-password': pwd1
+            
           }
         });
-
-        if (res.status === 403) {
-          sessionStorage.removeItem('gdx_admin_password');
-          showToast('密码验证失败，删除被拒绝。');
-          return;
-        }
 
         if (!res.ok) throw new Error('API delete failed');
 

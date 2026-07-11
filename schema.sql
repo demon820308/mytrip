@@ -1,4 +1,14 @@
 -- D1 database schema for GDX travel itinerary
+
+CREATE TABLE IF NOT EXISTS users (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  username     TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  salt         TEXT NOT NULL,
+  display_name TEXT,
+  created_at   TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS trip_segments (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
   from_st   TEXT NOT NULL,
@@ -36,6 +46,7 @@ CREATE TABLE IF NOT EXISTS guide_items (
   avoid        TEXT,
   is_special   INTEGER DEFAULT 0,
   trip_id      TEXT DEFAULT 'qianmin',
+  image        TEXT,
   created_at   TEXT DEFAULT (datetime('now'))
 );
 
@@ -45,5 +56,6 @@ CREATE TABLE IF NOT EXISTS trips (
   subtitle     TEXT,
   banner_image TEXT,
   route_json   TEXT NOT NULL,
+  owner_id     INTEGER REFERENCES users(id),
   created_at   TEXT DEFAULT (datetime('now'))
 );

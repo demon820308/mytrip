@@ -1,16 +1,26 @@
 // Cloudflare Pages Function: /api/segments
 // Handles GET (list), POST (add), PUT (update), DELETE (remove) for trip segments
 
+import { getAuthUser, readRequestBody, corsHeaders } from './_utils.js';
+
+export async function onRequestOptions() {
+  return new Response(null, { headers: corsHeaders });
+}
+
+async function checkTripOwner(db, tripId, userId) {
+  const trip = await db.prepare('SELECT owner_id FROM trips WHERE id = ?').bind(tripId).first();
+  return trip && (trip.owner_id === userId || trip.owner_id === null);
+}
+
+async function checkItemOwner(db, itemId, userId) {
+  const trip = await db.prepare('SELECT t.owner_id FROM trip_segments s JOIN trips t ON s.trip_id = t.id WHERE s.id = ?').bind(itemId).first();
+  return trip && (trip.owner_id === userId || trip.owner_id === null);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const db = env.DB;
   const url = new URL(request.url);
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-password',
-  };
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,23 +32,25 @@ export async function onRequest(context) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  // Admin password check for write actions
-  const correctPassword = env.ADMIN_PASSWORD || '123456';
-  if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
-    const inputPassword = request.headers.get('x-admin-password');
-    if (inputPassword !== correctPassword) {
-      return json({ error: '密码错误，无权修改数据' }, 403);
-    }
+  // Verify Auth for ALL requests
+  const user = await getAuthUser(request, env);
+  if (!user) {
+    return json({ error: '未登录或登录已过期' }, 401);
   }
 
   try {
     if (request.method === 'GET') {
-      const tripId = url.searchParams.get('trip_id') || 'qianmin';
+      const tripId = url.searchParams.get('trip_id');
+      if (!tripId) return json({ error: 'Missing trip_id' }, 400);
 
-      // Auto-prepopulate if table is completely empty
-      const countResult = await db.prepare('SELECT COUNT(*) as count FROM trip_segments').first();
+      if (!(await checkTripOwner(db, tripId, user.userId))) {
+        return json({ error: '无权访问此行程' }, 403);
+      }
+
+      // Auto-prepopulate if table for this trip is completely empty
+      const countResult = await db.prepare('SELECT COUNT(*) as count FROM trip_segments WHERE trip_id = ?').bind(tripId).first();
       if (countResult && countResult.count === 0) {
-        await prepopulate(db);
+        await prepopulate(db, tripId);
       }
 
       const { results } = await db
@@ -49,10 +61,16 @@ export async function onRequest(context) {
     }
 
     if (request.method === 'POST') {
-      const body = await request.json();
+      const body = await readRequestBody(request);
       const { from_st, to_st, date, dep_time, train_no, price, note, sort_order, trip_id } = body;
-      const tripId = trip_id || 'qianmin';
+      const tripId = trip_id;
       
+      if (!tripId) return json({ error: 'Missing trip_id' }, 400);
+
+      if (!(await checkTripOwner(db, tripId, user.userId))) {
+        return json({ error: '无权修改此行程' }, 403);
+      }
+
       const result = await db
         .prepare(
           'INSERT INTO trip_segments (from_st, to_st, date, dep_time, train_no, price, note, sort_order, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -63,12 +81,16 @@ export async function onRequest(context) {
     }
 
     if (request.method === 'PUT') {
-      const body = await request.json();
+      const body = await readRequestBody(request);
       const { id, from_st, to_st, date, dep_time, train_no, price, note, trip_id } = body;
-      const tripId = trip_id || 'qianmin';
+      const tripId = trip_id;
       
-      if (!id) return json({ error: 'id required' }, 400);
+      if (!id || !tripId) return json({ error: 'Missing required fields' }, 400);
       
+      if (!(await checkItemOwner(db, id, user.userId))) {
+        return json({ error: '无权修改此数据' }, 403);
+      }
+
       await db
         .prepare(
           'UPDATE trip_segments SET from_st = ?, to_st = ?, date = ?, dep_time = ?, train_no = ?, price = ?, note = ?, trip_id = ? WHERE id = ?'
@@ -81,6 +103,11 @@ export async function onRequest(context) {
     if (request.method === 'DELETE') {
       const id = url.searchParams.get('id');
       if (!id) return json({ error: 'id required' }, 400);
+      
+      if (!(await checkItemOwner(db, id, user.userId))) {
+        return json({ error: '无权删除此数据' }, 403);
+      }
+
       await db.prepare('DELETE FROM trip_segments WHERE id = ?').bind(id).run();
       return json({ ok: true });
     }
@@ -91,7 +118,7 @@ export async function onRequest(context) {
   }
 }
 
-async function prepopulate(db) {
+async function prepopulate(db, targetTripId) {
   const segments = [
     { from_st: '都匀东', to_st: '广州南', date: '2026-07-11', dep_time: '09:24', train_no: 'G3701', price: 318, note: '贵州出发高效中转车次', sort_order: 1 },
     { from_st: '广州南', to_st: '潮汕', date: '2026-07-11', dep_time: '14:30', train_no: 'G6313', price: 228, note: '粤东大枢纽，可达潮/汕/揭', sort_order: 2 },
@@ -104,7 +131,7 @@ async function prepopulate(db) {
       .prepare(
         'INSERT INTO trip_segments (from_st, to_st, date, dep_time, train_no, price, note, sort_order, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       )
-      .bind(seg.from_st, seg.to_st, seg.date, seg.dep_time, seg.train_no, seg.price, seg.note, seg.sort_order, 'qianmin')
+      .bind(seg.from_st, seg.to_st, seg.date, seg.dep_time, seg.train_no, seg.price, seg.note, seg.sort_order, targetTripId)
       .run();
   }
 }
