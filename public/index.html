@@ -68,16 +68,16 @@
     <!-- Tabs -->
     <div class="tabs-container">
       <button class="tab-btn active" data-tab="eat">
-        <i class="fa-solid fa-bowl-food"></i><span class="tab-text">吃 · 市井老字号</span>
+        <i class="fa-solid fa-bowl-food"></i><span class="tab-text">吃<span class="tab-desc"> · 市井老字号</span></span>
       </button>
       <button class="tab-btn" data-tab="play">
-        <i class="fa-solid fa-map-location-dot"></i><span class="tab-text">玩 · 景点避坑</span>
+        <i class="fa-solid fa-map-location-dot"></i><span class="tab-text">玩<span class="tab-desc"> · 景点避坑</span></span>
       </button>
       <button class="tab-btn" data-tab="stay">
-        <i class="fa-solid fa-hotel"></i><span class="tab-text">住 · 选区指引</span>
+        <i class="fa-solid fa-hotel"></i><span class="tab-text">住<span class="tab-desc"> · 选区指引</span></span>
       </button>
       <button class="tab-btn" data-tab="travel">
-        <i class="fa-solid fa-train-subway"></i><span class="tab-text">行 · 交通规划器</span>
+        <i class="fa-solid fa-train-subway"></i><span class="tab-text">行<span class="tab-desc"> · 交通规划器</span></span>
       </button>
     </div>
 
@@ -97,9 +97,6 @@
     <!-- Eat Tab -->
     <div class="tab-content" id="tab-eat">
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
-        <button class="btn btn-secondary" style="width: auto; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--accent);" onclick="clearAllGuides('eat')">
-          <i class="fa-solid fa-trash-can"></i> 清空美食
-        </button>
         <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('eat')">
           <i class="fa-solid fa-plus-circle"></i> 添加美食推荐
         </button>
@@ -112,9 +109,6 @@
     <!-- Play Tab -->
     <div class="tab-content d-none" id="tab-play">
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
-        <button class="btn btn-secondary" style="width: auto; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--accent);" onclick="clearAllGuides('play')">
-          <i class="fa-solid fa-trash-can"></i> 清空景点
-        </button>
         <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('play')">
           <i class="fa-solid fa-plus-circle"></i> 添加景点推荐
         </button>
@@ -801,23 +795,26 @@
 
     async function loadGuides() {
       const config = getActiveTripConfig();
+      const routeCities = config.route ? config.route.map(r => r.name) : [];
+      const matchesRoute = x => routeCities.some(city => city.includes(x.city) || x.city.includes(city));
+
       try {
         const res = await apiFetch(`/api/guides?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
         
-        EAT_DATA = data.filter(item => item.category === 'eat');
-        PLAY_DATA = data.filter(item => item.category === 'play');
+        EAT_DATA = data.filter(item => item.category === 'eat' && matchesRoute(item));
+        PLAY_DATA = data.filter(item => item.category === 'play' && matchesRoute(item));
       } catch (e) {
         console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
         const localEat = localStorage.getItem(`gdx_eat_data_${config.id}`);
         const localPlay = localStorage.getItem(`gdx_play_data_${config.id}`);
-        if (localEat) EAT_DATA = JSON.parse(localEat);
-        else EAT_DATA = DEFAULT_EAT_DATA.filter(x => config.route.some(r => r.name === x.city));
+        if (localEat) EAT_DATA = JSON.parse(localEat).filter(matchesRoute);
+        else EAT_DATA = DEFAULT_EAT_DATA.filter(matchesRoute);
         
-        if (localPlay) PLAY_DATA = JSON.parse(localPlay);
-        else PLAY_DATA = DEFAULT_PLAY_DATA.filter(x => config.route.some(r => r.name === x.city));
+        if (localPlay) PLAY_DATA = JSON.parse(localPlay).filter(matchesRoute);
+        else PLAY_DATA = DEFAULT_PLAY_DATA.filter(matchesRoute);
       }
       
       // Ensure all loaded guides have an ID for editing/deleting
@@ -855,7 +852,14 @@
         const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
         const item = dataArr.find(x => x.id == id);
         if (item) {
-          document.getElementById('guide-city').value = item.city;
+          // Ensure the item's city exists as an option (e.g. loaded from default data)
+          const citySelect = document.getElementById('guide-city');
+          if (![...citySelect.options].some(o => o.value === item.city)) {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = item.city;
+            citySelect.prepend(opt);
+          }
+          citySelect.value = item.city;
           document.getElementById('guide-name').value = item.name;
           document.getElementById('guide-address').value = item.address;
           document.getElementById('guide-desc').value = item.desc;
@@ -1091,18 +1095,14 @@
       const flowContainer = document.getElementById('route-flow');
       if (flowContainer) {
         if (config.id === 'empty') {
+          flowContainer.style.display = 'inline-flex';
           flowContainer.style.background = 'transparent';
           flowContainer.style.boxShadow = 'none';
           flowContainer.style.padding = '0';
           flowContainer.innerHTML = '<button class="btn" onclick="openTripManagerModal()" style="font-size: 1.15rem; padding: 14px 40px; border-radius: 40px; margin-top: 20px; box-shadow: 0 8px 25px rgba(222, 116, 86, 0.35); background: var(--primary); color: white; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"><i class="fa-solid fa-plane-departure"></i> 立即开启第一段行程</button>';
         } else {
-          flowContainer.style.background = 'var(--panel-bg)';
-          flowContainer.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.06)';
-          flowContainer.style.padding = '15px 30px';
-          flowContainer.innerHTML = config.route.map((item, index) => `
-            <span class="route-node">${item.name}</span>
-            ${index < config.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
-          `).join('');
+          // Option C: Hide the flow chart when a trip is loaded, only keeping the subtitle
+          flowContainer.style.display = 'none';
         }
       }
 
@@ -1251,18 +1251,6 @@
         eatGrid.appendChild(card);
       });
 
-      // Special formulas always append below eats
-      const activeTrip = getActiveTripConfig();
-      if (activeTrip.id === 'qianmin' && (currentCity === '全部' || currentCity === '汕头')) {
-        const formula = document.createElement('div');
-        formula.className = 'formula-container';
-        formula.innerHTML = `
-          <h3 class="formula-title"><i class="fa-solid fa-calculator"></i> 大潮汕生腌省钱公式</h3>
-          <p class="formula-math">1份生腌大虾/虾仁 (¥30-40) + 1份生腌血蚌 (¥25-35) + 1份大火炒薄壳/花蛤 (¥15-25) + 2碗白粥 (¥4) = 约 ¥74 - ¥104</p>
-          <p style="font-size: 0.9rem; color: var(--text-secondary);">人均只需 ¥40 - ¥50，既能品尝滑糯的果冻口感，又有热乎乎、镬气十足的白粥下海鲜！</p>
-        `;
-        eatGrid.appendChild(formula);
-      }
     }
 
     // Render Play Tab Cards (Attractions & Avoid tips)
@@ -1329,19 +1317,22 @@
         playGrid.appendChild(card);
       });
     }
-       async function loadHotels() {
+    async function loadHotels() {
       const config = getActiveTripConfig();
+      const routeCities = config.route ? config.route.map(r => r.name) : [];
+      const matchesRoute = x => routeCities.some(city => city.includes(x.city) || x.city.includes(city));
+
       try {
         const res = await apiFetch(`/api/hotels?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
-        bookedHotels = data;
+        bookedHotels = data.filter(matchesRoute);
       } catch (e) {
         console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
         const local = localStorage.getItem(`gdx_booked_hotels_${config.id}`);
         if (local) {
-          bookedHotels = JSON.parse(local);
+          bookedHotels = JSON.parse(local).filter(matchesRoute);
         } else {
           bookedHotels = [];
         }
@@ -1542,6 +1533,9 @@
     // Load segment planner list (Try D1 API, fallback to LocalStorage)
     async function loadSegments() {
       const config = getActiveTripConfig();
+      const routeCities = config.route ? config.route.map(r => r.name) : [];
+      const matchesRoute = x => routeCities.some(city => city.includes(x.from_st) || x.from_st.includes(city) || city.includes(x.to_st) || x.to_st.includes(city));
+
       const loader = document.getElementById('timeline-loading');
       if (loader) loader.style.display = 'block';
       timelineList.innerHTML = '';
@@ -1550,14 +1544,14 @@
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
-        segments = data;
+        segments = data.filter(matchesRoute);
       } catch (e) {
         console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
         const local = localStorage.getItem(`gdx_segments_${config.id}`);
         if (local) {
-          segments = JSON.parse(local);
+          segments = JSON.parse(local).filter(matchesRoute);
         } else {
-          segments = DEFAULT_SEGMENTS.filter(x => config.route.some(r => r.name === x.from_st || r.name === x.to_st));
+          segments = DEFAULT_SEGMENTS.filter(matchesRoute);
           localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
         }
       } finally {
@@ -1604,10 +1598,10 @@
               <a href="${scheduleSearchUrl}" target="_blank" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
                 <i class="fa-solid fa-calendar-days"></i> 时刻表
               </a>
-              <button class="btn-icon" onclick="startEditSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})" style="color: var(--primary);">
+              <button class="btn-icon" onclick="startEditSegment(${seg.id || index}, ${seg.id ? 1 : 0})" style="color: var(--primary);">
                 <i class="fa-solid fa-pencil"></i>
               </button>
-              <button class="btn-icon" onclick="deleteSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})">
+              <button class="btn-icon" onclick="deleteSegment(${seg.id || index}, ${seg.id ? 1 : 0})">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -1650,13 +1644,14 @@
           try {
             const res = await apiFetch('/api/segments', {
               method: 'PUT',
-              headers: { 
-                'Content-Type': 'application/json',
-                
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(newSegment)
             });
             if (!res.ok) throw new Error('API update failed');
+            // Sync local array so fallback cache stays consistent
+            const idx = segments.findIndex(s => s.id === editingId);
+            if (idx !== -1) segments[idx] = { ...segments[idx], ...newSegment };
+            localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
           } catch (err) {
             console.error(err);
           }
@@ -1704,6 +1699,10 @@
             headers: { }
           });
           if (!res.ok) throw new Error('API delete failed');
+          // Keep localStorage in sync so offline fallback doesn't resurface deleted items
+          const idx = segments.findIndex(s => s.id === idOrIndex);
+          if (idx !== -1) segments.splice(idx, 1);
+          localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
         } catch (e) {
           console.error(e);
         }
@@ -1825,31 +1824,6 @@
       window.location.reload();
     }
 
-    // Clear all guides under active trip
-    async function clearAllGuides(category) {
-      const config = getActiveTripConfig();
-      if (!confirm(`确定要清空该行程的所有${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
-
-      try {
-        const res = await apiFetch(`/api/guides?clear=all&category=${category}&trip_id=${config.id}`, {
-          method: 'DELETE',
-          headers: { }
-        });
-        if (!res.ok) throw new Error('Clear request failed');
-        
-        // Sync locally
-        if (category === 'eat') EAT_DATA = [];
-        else PLAY_DATA = [];
-        localStorage.removeItem(`gdx_${category}_data_${config.id}`);
-        
-        if (category === 'eat') renderEatTab();
-        else renderPlayTab();
-        showToast('清空成功！');
-      } catch (e) {
-        showToast('清空失败: ' + e.message);
-      }
-    }
-
     // Copy itinerary text helper
     function copyItineraryText() {
       let text = "🚄 联名自助行程交通规划概要：\n\n";
@@ -1937,7 +1911,7 @@
             class="form-input city-area" style="margin:0; font-size:0.85rem;">
           <input type="text" placeholder="推荐理由（如：交通方便，美食多）" value="${data.stayReason||''}"
             class="form-input city-reason" style="margin:0; font-size:0.85rem;">
-          <input type="text" placeholder="高德地图搜索词（如：广州东站）" value="${data.stayLink ? decodeURIComponent(data.stayLink.split('query=')[1]||'') : ''}"
+          <input type="text" placeholder="高德地图搜索词（如：广州东站）" value="${data.stayLink ? decodeURIComponent((data.stayLink.split('query=')[1] ?? '').split('&')[0]) : ''}"
             class="form-input city-map" style="margin:0; font-size:0.85rem;">
         </div>
       `;

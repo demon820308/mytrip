@@ -47,6 +47,24 @@ export async function onRequest(context) {
         return json({ error: '无权访问此行程' }, 403);
       }
 
+      // Cleanup step: remove booked hotels that don't belong to the route anymore
+      const trip = await db.prepare('SELECT route_json FROM trips WHERE id = ?').bind(tripId).first();
+      if (trip && trip.route_json) {
+        try {
+          const route = JSON.parse(trip.route_json);
+          if (Array.isArray(route)) {
+            const allowedCities = route.map(r => r.name);
+            const { results: currentHotels } = await db.prepare('SELECT id, city FROM booked_hotels WHERE trip_id = ?').bind(tripId).all();
+            const toDelete = currentHotels.filter(hotel => !allowedCities.some(city => city.includes(hotel.city) || hotel.city.includes(city)));
+            if (toDelete.length > 0) {
+              await db.batch(toDelete.map(hotel => db.prepare('DELETE FROM booked_hotels WHERE id = ?').bind(hotel.id)));
+            }
+          }
+        } catch (e) {
+          console.error('Hotels cleanup failed', e);
+        }
+      }
+
       const { results } = await db
         .prepare('SELECT * FROM booked_hotels WHERE trip_id = ? ORDER BY checkin, created_at')
         .bind(tripId)

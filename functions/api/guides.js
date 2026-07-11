@@ -51,6 +51,24 @@ export async function onRequest(context) {
       const countResult = await db.prepare('SELECT COUNT(*) as count FROM guide_items WHERE trip_id = ?').bind(tripId).first();
       if (countResult && countResult.count === 0) {
         await prepopulate(db, tripId);
+      } else {
+        // Cleanup step: remove prepopulated guide items that don't belong to the route anymore
+        const trip = await db.prepare('SELECT route_json FROM trips WHERE id = ?').bind(tripId).first();
+        if (trip && trip.route_json) {
+          try {
+            const route = JSON.parse(trip.route_json);
+            if (Array.isArray(route)) {
+              const allowedCities = route.map(r => r.name);
+              const { results: currentItems } = await db.prepare('SELECT id, city FROM guide_items WHERE trip_id = ?').bind(tripId).all();
+              const toDelete = currentItems.filter(item => !allowedCities.some(city => city.includes(item.city) || item.city.includes(city)));
+              if (toDelete.length > 0) {
+                await db.batch(toDelete.map(item => db.prepare('DELETE FROM guide_items WHERE id = ?').bind(item.id)));
+              }
+            }
+          } catch (e) {
+            console.error('Guides cleanup failed', e);
+          }
+        }
       }
 
       const { results } = await db
@@ -148,8 +166,21 @@ export async function onRequest(context) {
 }
 
 async function prepopulate(db, targetTripId) {
+  const trip = await db.prepare('SELECT route_json FROM trips WHERE id = ?').bind(targetTripId).first();
+  let allowedCities = [];
+  if (trip && trip.route_json) {
+    try {
+      const route = JSON.parse(trip.route_json);
+      if (Array.isArray(route)) {
+        allowedCities = route.map(r => r.name);
+      }
+    } catch (e) {
+      console.error('Failed to parse route_json during prepopulate', e);
+    }
+  }
+
   const eats = [
-    { city: '揭阳', name: '贤德乒乓粿（老字号）', type: '糕点', address: '榕城区 西马路与北直街交叉口向北50米', desc: '老街坊逢年过节必去的打包店。纯手工制作，外皮极其软糯，下锅煎到两面微焦，内馅裹满芝麻、花生和少许咸香肉脯，甜咸交织，是最传统的揭阳配方。' },
+    { city: '揭阳', name: '贤德乒乓粿（老字号）', type: '糕点', address: '榕城区 西马路与北直街交叉口向北50米', desc: '老街坊逢年过节必去的打包店。纯手工制作，外皮极其软糯，下锅煎到两面微焦，内馅裹满芝麻、花生 and 少许咸香肉脯，甜咸交织，是最传统的揭阳配方。' },
     { city: '揭阳', name: '西马路尖米丸/尖米粿摊', type: '粿条', address: '榕城区 西马路中段', desc: '如果想吃咸口，就去西马路找这种老牌大排档。纯米浆手工搓成两头尖尖的“尖米丸”，配上鲜美的猪骨汤、肉碎和芹芹菜粒，汤头极其清鲜。' },
     { city: '潮州', name: '溪口刘卜卤鹅', type: '卤鹅', address: '湘桥区 意溪镇溪口四村中路（建议在古城打车前往）', desc: '在本地人心目中地位极高的老字号。溪口流派的卤汁味道更偏向于浓郁咸香，一定要让他们现切一些鹅八珍、鹅肝（神级口感，像豆腐一样嫩）和带骨鹅肉，老卤汁回甘明显。' },
     { city: '汕头', name: '新埔汕特湿炒牛肉粿条', type: '湿炒/粿条', address: '金平区 金砂路新埔民居区内', desc: '纯正的苍蝇馆子，主打“湿炒”。大火把粿条炒出焦香，然后把新鲜牛肉和芥兰倒进浓郁的沙茶酱汁里快速勾芡盖在粿条上。浓稠的沙茶汁裹满每一根粿条，牛肉嫩到爆汁。' }
@@ -161,7 +192,11 @@ async function prepopulate(db, targetTripId) {
     { city: '泉州', name: '西街与开元寺（泉州）', address: '鲤城区 西街', desc: '泉州保存最完整的古街区，尽头是开元寺。寺内有我国现存最高的仿木结构石塔：东西双塔。', avoid: '不要花钱去网红咖啡馆天台拍双塔。去【泉州影剧院】旁边的钟楼天桥，或西街免费的游客中心天台。主街小吃不地道，吃传统美食往内巷深处走。' }
   ];
 
-  for (const item of eats) {
+  const matchesRoute = item => allowedCities.some(city => city.includes(item.city) || item.city.includes(city));
+  const filteredEats = eats.filter(matchesRoute);
+  const filteredPlays = plays.filter(matchesRoute);
+
+  for (const item of filteredEats) {
     await db
       .prepare(
         'INSERT INTO guide_items (category, city, name, type, address, desc, avoid, is_special, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -170,7 +205,7 @@ async function prepopulate(db, targetTripId) {
       .run();
   }
 
-  for (const item of plays) {
+  for (const item of filteredPlays) {
     await db
       .prepare(
         'INSERT INTO guide_items (category, city, name, type, address, desc, avoid, is_special, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'

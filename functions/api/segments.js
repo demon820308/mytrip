@@ -51,6 +51,26 @@ export async function onRequest(context) {
       const countResult = await db.prepare('SELECT COUNT(*) as count FROM trip_segments WHERE trip_id = ?').bind(tripId).first();
       if (countResult && countResult.count === 0) {
         await prepopulate(db, tripId);
+      } else {
+        // Cleanup step: remove prepopulated segments that don't belong to the route anymore
+        const trip = await db.prepare('SELECT route_json FROM trips WHERE id = ?').bind(tripId).first();
+        if (trip && trip.route_json) {
+          try {
+            const route = JSON.parse(trip.route_json);
+            if (Array.isArray(route)) {
+              const allowedCities = route.map(r => r.name);
+              const { results: currentSegs } = await db.prepare('SELECT id, from_st, to_st FROM trip_segments WHERE trip_id = ?').bind(tripId).all();
+              const toDelete = currentSegs.filter(seg => {
+                return !allowedCities.some(city => city.includes(seg.from_st) || seg.from_st.includes(city) || city.includes(seg.to_st) || seg.to_st.includes(city));
+              });
+              if (toDelete.length > 0) {
+                await db.batch(toDelete.map(seg => db.prepare('DELETE FROM trip_segments WHERE id = ?').bind(seg.id)));
+              }
+            }
+          } catch (e) {
+            console.error('Segments cleanup failed', e);
+          }
+        }
       }
 
       const { results } = await db
@@ -119,6 +139,19 @@ export async function onRequest(context) {
 }
 
 async function prepopulate(db, targetTripId) {
+  const trip = await db.prepare('SELECT route_json FROM trips WHERE id = ?').bind(targetTripId).first();
+  let allowedCities = [];
+  if (trip && trip.route_json) {
+    try {
+      const route = JSON.parse(trip.route_json);
+      if (Array.isArray(route)) {
+        allowedCities = route.map(r => r.name);
+      }
+    } catch (e) {
+      console.error('Failed to parse route_json during prepopulate', e);
+    }
+  }
+
   const segments = [
     { from_st: '都匀东', to_st: '广州南', date: '2026-07-11', dep_time: '09:24', train_no: 'G3701', price: 318, note: '贵州出发高效中转车次', sort_order: 1 },
     { from_st: '广州南', to_st: '潮汕', date: '2026-07-11', dep_time: '14:30', train_no: 'G6313', price: 228, note: '粤东大枢纽，可达潮/汕/揭', sort_order: 2 },
@@ -126,7 +159,10 @@ async function prepopulate(db, targetTripId) {
     { from_st: '饶平', to_st: '三明', date: '2026-07-12', dep_time: '08:45', train_no: 'D2312', price: 172, note: '闽粤边界车站直达三明备选', sort_order: 4 }
   ];
 
-  for (const seg of segments) {
+  const matchesRoute = seg => allowedCities.some(city => city.includes(seg.from_st) || seg.from_st.includes(city) || city.includes(seg.to_st) || seg.to_st.includes(city));
+  const filteredSegments = segments.filter(matchesRoute);
+
+  for (const seg of filteredSegments) {
     await db
       .prepare(
         'INSERT INTO trip_segments (from_st, to_st, date, dep_time, train_no, price, note, sort_order, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'

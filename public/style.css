@@ -612,31 +612,6 @@ body {
   border: 1px solid var(--panel-border);
 }
 
-/* Special Formula container */
-.formula-container {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(204, 120, 92, 0.06) 0%, rgba(198, 69, 69, 0.06) 100%);
-  border: 1px solid rgba(204, 120, 92, 0.2);
-  border-radius: 12px;
-  padding: 25px;
-  margin-top: 25px;
-  text-align: center;
-  box-shadow: var(--card-shadow);
-}
-
-.formula-title {
-  font-family: var(--font-serif);
-  font-size: 1.4rem;
-  color: var(--primary);
-  margin-bottom: 12px;
-}
-
-.formula-math {
-  font-size: 1.15rem;
-  font-weight: 500;
-  margin-bottom: 15px;
-  color: var(--text-primary);
-}
 
 /* Summary Bar */
 .summary-bar {
@@ -704,7 +679,7 @@ body {
     flex: none;
     padding: 10px 16px;
   }
-  .tab-text {
+  .tab-desc {
     display: none;
   }
   .station-flow {
