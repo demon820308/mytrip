@@ -25,6 +25,14 @@
   <!-- Main Content -->
   <main class="main-container">
     
+    <!-- Trip Switcher Bar -->
+    <div class="trip-switcher-bar" style="margin-bottom: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+      <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-solid fa-route"></i> 当前行程：</span>
+      <select id="trip-selector" onchange="switchTrip(this.value)" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--panel-border); background: var(--panel-bg); color: var(--text-primary); font-size: 0.9rem; cursor: pointer; outline: none; font-weight: 500;">
+        <!-- Rendered by JS -->
+      </select>
+    </div>
+
     <!-- Tabs -->
     <div class="tabs-container">
       <button class="tab-btn active" data-tab="eat">
@@ -56,7 +64,10 @@
     
     <!-- Eat Tab -->
     <div class="tab-content" id="tab-eat">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <button class="btn btn-secondary" style="width: auto; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--accent);" onclick="clearAllGuides('eat')">
+          <i class="fa-solid fa-trash-can"></i> 清空美食
+        </button>
         <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('eat')">
           <i class="fa-solid fa-plus-circle"></i> 添加美食推荐
         </button>
@@ -68,7 +79,10 @@
 
     <!-- Play Tab -->
     <div class="tab-content d-none" id="tab-play">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <button class="btn btn-secondary" style="width: auto; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--accent);" onclick="clearAllGuides('play')">
+          <i class="fa-solid fa-trash-can"></i> 清空景点
+        </button>
         <button class="btn" style="width: auto; background: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="openGuideItemModal('play')">
           <i class="fa-solid fa-plus-circle"></i> 添加景点推荐
         </button>
@@ -354,66 +368,107 @@
       { city: '泉州', name: '洛阳桥', address: '洛江区 洛阳江水道上', desc: '中国古代著名海港大石桥，北宋时期的工程奇迹，采用独特的“筏形基础”和“养蛎固基”技术。', avoid: '桥长一公里无遮蔽物。千万别在11点-15点暴晒时段去。建议下午5点左右前往，江风徐徐，夕阳余晖洒在桥石上极其壮丽。' }
     ];
 
-    const ROUTE_CONFIG = {
-      title: "黔闽市井行程指南",
-      subtitle: "贵州都匀 ➔ 广州 ➔ 揭阳 ➔ 潮州 ➔ 汕头 ➔ 东山岛 ➔ 泉州 ➔ 三明",
-      bannerImage: "images/hero_banner.webp",
-      route: [
-        { name: "都匀东", isTransitOnly: true },
-        { 
-          name: "广州", 
-          isTransitOnly: false, 
-          image: "images/guangzhou.webp",
-          stayArea: "广州东站或体育西路周边", 
-          stayReason: "交通极为便利，方便快速换乘，周边商圈繁华，美食店极多。", 
-          stayLink: "https://ditu.amap.com/search?query=广州东站" 
-        },
-        { 
-          name: "揭阳", 
-          isTransitOnly: false, 
-          image: "images/jieyang_scenery.webp",
-          stayArea: "进贤门或西马路老城区", 
-          stayReason: "老城区保留了最原汁原味的揭阳生活气息，步行就能吃遍所有老字号。", 
-          stayLink: "https://ditu.amap.com/search?query=揭阳进贤门" 
-        },
-        { 
-          name: "潮州", 
-          isTransitOnly: false, 
-          image: "images/chaozhou_scenery.webp",
-          stayArea: "古城西门外居民区", 
-          stayReason: "避开景区高昂物价，价格非常亲民，而且步行进古城很近。", 
-          stayLink: "https://ditu.amap.com/search?query=潮州西门口" 
-        },
-        { 
-          name: "汕头", 
-          isTransitOnly: false, 
-          image: "images/shantou_scenery.webp",
-          stayArea: "龙眼路或万象城周边", 
-          stayReason: "全汕头的平价美食核心圈，方便深夜下楼吃夜粥，外卖几分钟送达。", 
-          stayLink: "https://ditu.amap.com/search?query=汕头龙眼路" 
-        },
-        { 
-          name: "东山岛", 
-          isTransitOnly: false, 
-          image: "images/dongshan_scenery.webp",
-          stayArea: "铜陵镇老居民区", 
-          stayReason: "体验原汁原味的闽南小镇慢生活，走出来就是南门湾、顶街等景点。", 
-          stayLink: "https://ditu.amap.com/search?query=东山县铜陵镇" 
-        },
-        { 
-          name: "泉州", 
-          isTransitOnly: false, 
-          image: "images/quanzhou_scenery.webp",
-          stayArea: "西街周边民宿或丰泽区酒店", 
-          stayReason: "西街周边可深度体验半城烟火半城仙氛围；质量要求高可选择丰泽区。", 
-          stayLink: "https://ditu.amap.com/search?query=泉州西街" 
-        },
-        { name: "三明", isTransitOnly: true }
-      ]
-    };
+    // Global Trip Template List (Add routes here!)
+    const TRIP_LIST = [
+      {
+        id: "qianmin",
+        title: "黔闽市井行程指南",
+        subtitle: "贵州都匀 ➔ 广州 ➔ 揭阳 ➔ 潮州 ➔ 汕头 ➔ 东山岛 ➔ 泉州 ➔ 三明",
+        bannerImage: "images/hero_banner.webp",
+        route: [
+          { name: "都匀东", isTransitOnly: true },
+          { 
+            name: "广州", 
+            isTransitOnly: false, 
+            image: "images/guangzhou.webp",
+            stayArea: "广州东站或体育西路周边", 
+            stayReason: "交通极为便利，方便快速换乘，周边商圈繁华，美食店极多。", 
+            stayLink: "https://ditu.amap.com/search?query=广州东站" 
+          },
+          { 
+            name: "揭阳", 
+            isTransitOnly: false, 
+            image: "images/jieyang_scenery.webp",
+            stayArea: "进贤门或西马路老城区", 
+            stayReason: "老城区保留了最原汁原味的揭阳生活气息，步行就能吃遍所有老字号。", 
+            stayLink: "https://ditu.amap.com/search?query=揭阳进贤门" 
+          },
+          { 
+            name: "潮州", 
+            isTransitOnly: false, 
+            image: "images/chaozhou_scenery.webp",
+            stayArea: "古城西门外居民区", 
+            stayReason: "避开景区高昂物价，价格非常亲民，而且步行进古城很近。", 
+            stayLink: "https://ditu.amap.com/search?query=潮州西门口" 
+          },
+          { 
+            name: "汕头", 
+            isTransitOnly: false, 
+            image: "images/shantou_scenery.webp",
+            stayArea: "龙眼路或万象城周边", 
+            stayReason: "全汕头的平价美食核心圈，方便深夜下楼吃夜粥，外卖几分钟送达。", 
+            stayLink: "https://ditu.amap.com/search?query=汕头龙眼路" 
+          },
+          { 
+            name: "东山岛", 
+            isTransitOnly: false, 
+            image: "images/dongshan_scenery.webp",
+            stayArea: "铜陵镇老居民区", 
+            stayReason: "体验原汁原味的闽南小镇慢生活，走出来就是南门湾、顶街等景点。", 
+            stayLink: "https://ditu.amap.com/search?query=东山县铜陵镇" 
+          },
+          { 
+            name: "泉州", 
+            isTransitOnly: false, 
+            image: "images/quanzhou_scenery.webp",
+            stayArea: "西街周边民宿或丰泽区酒店", 
+            stayReason: "西街周边可深度体验半城烟火半城仙氛围；质量要求高可选择丰泽区。", 
+            stayLink: "https://ditu.amap.com/search?query=泉州西街" 
+          },
+          { name: "三明", isTransitOnly: true }
+        ]
+      },
+      {
+        id: "chuandian",
+        title: "川滇市井旅行指南",
+        subtitle: "成都 ➔ 西昌 ➔ 大理 ➔ 昆明",
+        bannerImage: "images/hero_banner.webp",
+        route: [
+          { name: "成都", isTransitOnly: true },
+          { 
+            name: "西昌", 
+            isTransitOnly: false, 
+            image: "images/hero_banner.webp",
+            stayArea: "邛海湿地周边", 
+            stayReason: "邛海周边景色非常优美，有很多湖边客栈，早起能直接在海边散步。", 
+            stayLink: "https://ditu.amap.com/search?query=邛海" 
+          },
+          { 
+            name: "大理", 
+            isTransitOnly: false, 
+            image: "images/hero_banner.webp",
+            stayArea: "大理古城西门或双廊镇", 
+            stayReason: "双廊临海客栈能直面苍山洱海；古城西门外吃本地人菜馆极便宜。", 
+            stayLink: "https://ditu.amap.com/search?query=大理古城" 
+          },
+          { name: "昆明", isTransitOnly: true }
+        ]
+      }
+    ];
 
+    const DEFAULT_TRIP_ID = "qianmin";
+
+    // Get active trip configuration dynamically
+    function getActiveTripConfig() {
+      const storedId = localStorage.getItem('gdx_current_trip_id') || DEFAULT_TRIP_ID;
+      const config = TRIP_LIST.find(t => t.id === storedId);
+      return config || TRIP_LIST[0];
+    }
+
+    // Helper functions mapping to active trip config
     function getStayData() {
-      return ROUTE_CONFIG.route
+      const config = getActiveTripConfig();
+      return config.route
         .filter(r => !r.isTransitOnly && r.stayArea)
         .map(r => ({
           city: r.name,
@@ -424,58 +479,53 @@
     }
 
     function getCityImage(cityName) {
-      const r = ROUTE_CONFIG.route.find(x => x.name === cityName);
+      const config = getActiveTripConfig();
+      const r = config.route.find(x => x.name === cityName);
       return (r && r.image) || 'images/hero_banner.webp';
+    }
+
+    // Admin authorization session prompt
+    function getAdminPassword() {
+      let pwd = sessionStorage.getItem('gdx_admin_password');
+      if (!pwd) {
+        pwd = prompt('此敏感写入操作需要输入管理员密码（默认为 123456）：');
+        if (pwd) {
+          sessionStorage.setItem('gdx_admin_password', pwd);
+        }
+      }
+      return pwd || '';
     }
 
     let EAT_DATA = JSON.parse(JSON.stringify(DEFAULT_EAT_DATA));
     let PLAY_DATA = JSON.parse(JSON.stringify(DEFAULT_PLAY_DATA));
 
     async function loadGuides() {
+      const config = getActiveTripConfig();
       try {
-        const res = await fetch('/api/guides');
+        const res = await fetch(`/api/guides?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
-        let data = await res.json();
+        const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
-        
-        // If D1 is empty, prepopulate it
-        if (data.length === 0) {
-          data = await prepopulateGuidesDb();
-        }
         
         EAT_DATA = data.filter(item => item.category === 'eat');
         PLAY_DATA = data.filter(item => item.category === 'play');
       } catch (e) {
         console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
-        const localEat = localStorage.getItem('gdx_eat_data');
-        const localPlay = localStorage.getItem('gdx_play_data');
+        const localEat = localStorage.getItem(`gdx_eat_data_${config.id}`);
+        const localPlay = localStorage.getItem(`gdx_play_data_${config.id}`);
         if (localEat) EAT_DATA = JSON.parse(localEat);
+        else EAT_DATA = DEFAULT_EAT_DATA.filter(x => config.route.some(r => r.name === x.city));
+        
         if (localPlay) PLAY_DATA = JSON.parse(localPlay);
+        else PLAY_DATA = DEFAULT_PLAY_DATA.filter(x => config.route.some(r => r.name === x.city));
       }
+      
+      // Ensure all loaded guides have an ID for editing/deleting
+      EAT_DATA.forEach((h, idx) => { if (!h.id) h.id = 1000 + idx; });
+      PLAY_DATA.forEach((h, idx) => { if (!h.id) h.id = 2000 + idx; });
+
       renderEatTab();
       renderPlayTab();
-    }
-
-    async function prepopulateGuidesDb() {
-      const itemsToInsert = [];
-      DEFAULT_EAT_DATA.forEach(item => {
-        itemsToInsert.push({ ...item, category: 'eat', is_special: item.isSpecial ? 1 : 0 });
-      });
-      DEFAULT_PLAY_DATA.forEach(item => {
-        itemsToInsert.push({ ...item, category: 'play', is_special: 0 });
-      });
-
-      for (const item of itemsToInsert) {
-        await fetch('/api/guides', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item)
-        });
-      }
-
-      const res = await fetch('/api/guides');
-      if (!res.ok) throw new Error('Failed to reload guides after prepopulating');
-      return await res.json();
     }
 
     function openGuideItemModal(category, id = null) {
@@ -527,6 +577,10 @@
 
     async function handleSaveGuideItem(e) {
       e.preventDefault();
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
       const id = document.getElementById('guide-id').value;
       const category = document.getElementById('guide-category').value;
       const city = document.getElementById('guide-city').value;
@@ -534,7 +588,7 @@
       const address = document.getElementById('guide-address').value.trim();
       const desc = document.getElementById('guide-desc').value.trim();
 
-      const itemData = { category, city, name, address, desc };
+      const itemData = { category, city, name, address, desc, trip_id: config.id };
 
       if (category === 'eat') {
         itemData.type = document.getElementById('guide-type').value.trim();
@@ -555,9 +609,18 @@
         const method = isEdit ? 'PUT' : 'POST';
         const res = await fetch('/api/guides', {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-password': pwd
+          },
           body: JSON.stringify(itemData)
         });
+
+        if (res.status === 403) {
+          sessionStorage.removeItem('gdx_admin_password');
+          showToast('密码错误，操作被拒绝！');
+          return;
+        }
 
         if (!res.ok) throw new Error('API save failed');
 
@@ -585,7 +648,7 @@
         }
       }
 
-      localStorage.setItem(`gdx_${category}_data`, JSON.stringify(category === 'eat' ? EAT_DATA : PLAY_DATA));
+      localStorage.setItem(`gdx_${category}_data_${config.id}`, JSON.stringify(category === 'eat' ? EAT_DATA : PLAY_DATA));
 
       if (category === 'eat') {
         renderEatTab();
@@ -599,19 +662,30 @@
 
     async function deleteGuideItem(id, category) {
       if (!confirm(`确定要删除这个${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
+      const pwd = getAdminPassword();
+      if (!pwd) return;
 
+      const config = getActiveTripConfig();
       const dataArr = category === 'eat' ? EAT_DATA : PLAY_DATA;
       const idx = dataArr.findIndex(x => x.id == id);
       if (idx === -1) return;
 
       dataArr.splice(idx, 1);
-      localStorage.setItem(`gdx_${category}_data`, JSON.stringify(dataArr));
+      localStorage.setItem(`gdx_${category}_data_${config.id}`, JSON.stringify(dataArr));
 
       try {
         if (typeof id === 'number' && id > 1000000000000) {
           // Local fallback ID
         } else {
-          const res = await fetch(`/api/guides?id=${id}`, { method: 'DELETE' });
+          const res = await fetch(`/api/guides?id=${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-admin-password': pwd }
+          });
+          if (res.status === 403) {
+            sessionStorage.removeItem('gdx_admin_password');
+            showToast('密码错误，操作被拒绝！');
+            return;
+          }
           if (!res.ok) throw new Error('API delete failed');
         }
       } catch (e) {
@@ -680,36 +754,6 @@
       }
     });
 
-    function initRouteConfig() {
-      // Set Document Title
-      const titleEl = document.getElementById('site-title');
-      if (titleEl) titleEl.textContent = "🚄 " + ROUTE_CONFIG.title;
-      
-      // Set Hero Title and Subtitle
-      const heroTitleEl = document.getElementById('hero-title');
-      const heroSubtitleEl = document.getElementById('hero-subtitle');
-      if (heroTitleEl) heroTitleEl.textContent = ROUTE_CONFIG.title;
-      if (heroSubtitleEl) heroSubtitleEl.textContent = ROUTE_CONFIG.subtitle;
-      
-      // Render Route Flow Chart
-      const flowContainer = document.getElementById('route-flow');
-      if (flowContainer) {
-        flowContainer.innerHTML = ROUTE_CONFIG.route.map((item, index) => `
-          <span class="route-node">${item.name}</span>
-          ${index < ROUTE_CONFIG.route.length - 1 ? '<i class="fa-solid fa-chevron-right route-arrow"></i>' : ''}
-        `).join('');
-      }
-
-      // Populate guide-city dropdown select in modal
-      const citySelect = document.getElementById('guide-city');
-      if (citySelect) {
-        citySelect.innerHTML = ROUTE_CONFIG.route
-          .filter(r => !r.isTransitOnly)
-          .map(r => `<option value="${r.name}">${r.name}</option>`)
-          .join('');
-      }
-    }
-
     // Navigation Tabs logic
     function initTabs() {
       const tabs = document.querySelectorAll('.tab-btn');
@@ -739,7 +783,8 @@
 
     // Render city filter buttons dynamically
     function renderCityFilters() {
-      const cities = ['全部', ...ROUTE_CONFIG.route.filter(r => !r.isTransitOnly).map(r => r.name)];
+      const config = getActiveTripConfig();
+      const cities = ['全部', ...config.route.filter(r => !r.isTransitOnly).map(r => r.name)];
       cityFilters.innerHTML = '';
       cities.forEach(city => {
         const btn = document.createElement('button');
@@ -823,7 +868,8 @@
       });
 
       // Special formulas always append below eats
-      if (currentCity === '全部' || currentCity === '汕头') {
+      const activeTrip = getActiveTripConfig();
+      if (activeTrip.id === 'qianmin' && (currentCity === '全部' || currentCity === '汕头')) {
         const formula = document.createElement('div');
         formula.className = 'formula-container';
         formula.innerHTML = `
@@ -899,20 +945,17 @@
         playGrid.appendChild(card);
       });
     }
-
-    // Hotel Booking Logic
-    let bookedHotels = [];
-
-    async function loadHotels() {
+       async function loadHotels() {
+      const config = getActiveTripConfig();
       try {
-        const res = await fetch('/api/hotels');
+        const res = await fetch(`/api/hotels?trip_id=${config.id}`);
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Data is not an array');
         bookedHotels = data;
       } catch (e) {
         console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
-        const local = localStorage.getItem('gdx_booked_hotels');
+        const local = localStorage.getItem(`gdx_booked_hotels_${config.id}`);
         if (local) {
           bookedHotels = JSON.parse(local);
         } else {
@@ -1048,31 +1091,45 @@
 
     async function handleAddHotel(e) {
       e.preventDefault();
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
       const city = document.getElementById('hotel-city').value;
-      const name = document.getElementById('hotel-name').value;
+      const name = document.getElementById('hotel-name').value.trim();
       const checkin = document.getElementById('hotel-checkin').value;
       const checkout = document.getElementById('hotel-checkout').value;
-      const address = document.getElementById('hotel-address').value;
+      const address = document.getElementById('hotel-address').value.trim();
       const price = Number(document.getElementById('hotel-price').value);
 
-      const hotelData = { city, name, checkin, checkout, address, price };
+      const hotelData = { city, name, checkin, checkout, address, price, trip_id: config.id };
 
       try {
         const res = await fetch('/api/hotels', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-password': pwd
+          },
           body: JSON.stringify(hotelData)
         });
+
+        if (res.status === 403) {
+          sessionStorage.removeItem('gdx_admin_password');
+          showToast('密码错误，保存失败！');
+          return;
+        }
+
         if (!res.ok) throw new Error('API save failed');
         const newHotel = await res.json();
         bookedHotels.push({ id: newHotel.id, ...hotelData });
-      } catch (e) {
-        console.warn('D1 database error, saving to LocalStorage fallback:', e.message);
+      } catch (err) {
+        console.warn('D1 database error, saving to LocalStorage fallback:', err.message);
         bookedHotels.push({ id: Date.now() + Math.random(), ...hotelData });
       }
 
       bookedHotels.sort((a, b) => new Date(a.checkin) - new Date(b.checkin));
-      localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
+      localStorage.setItem(`gdx_booked_hotels_${config.id}`, JSON.stringify(bookedHotels));
       renderGlobalHotels();
       renderStayTab();
       e.target.reset();
@@ -1081,17 +1138,29 @@
     }
 
     async function deleteHotel(id) {
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
       const index = bookedHotels.findIndex(h => h.id == id);
       if (index === -1) return;
 
       bookedHotels.splice(index, 1);
-      localStorage.setItem('gdx_booked_hotels', JSON.stringify(bookedHotels));
+      localStorage.setItem(`gdx_booked_hotels_${config.id}`, JSON.stringify(bookedHotels));
 
       try {
         if (typeof id === 'number' && id > 1000000000000) {
-          // Local fallback ID, skip remote delete
+          // Local fallback ID
         } else {
-          const res = await fetch(`/api/hotels?id=${id}`, { method: 'DELETE' });
+          const res = await fetch(`/api/hotels?id=${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-admin-password': pwd }
+          });
+          if (res.status === 403) {
+            sessionStorage.removeItem('gdx_admin_password');
+            showToast('密码错误，操作被拒绝！');
+            return;
+          }
           if (!res.ok) throw new Error('API delete failed');
         }
       } catch (e) {
@@ -1104,10 +1173,365 @@
 
     // Load segment planner list (Try D1 API, fallback to LocalStorage)
     async function loadSegments() {
+      const config = getActiveTripConfig();
       const loader = document.getElementById('timeline-loading');
       if (loader) loader.style.display = 'block';
       timelineList.innerHTML = '';
       try {
+        const res = await fetch(`/api/segments?trip_id=${config.id}`);
+        if (!res.ok) throw new Error('API fetch failed');
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Data is not an array');
+        segments = data;
+      } catch (e) {
+        console.warn('D1 Database offline or API error, falling back to LocalStorage.', e.message);
+        const local = localStorage.getItem(`gdx_segments_${config.id}`);
+        if (local) {
+          segments = JSON.parse(local);
+        } else {
+          segments = DEFAULT_SEGMENTS.filter(x => config.route.some(r => r.name === x.from_st || r.name === x.to_st));
+          localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
+        }
+      } finally {
+        if (loader) loader.style.display = 'none';
+      }
+      renderTimeline();
+    }
+
+    // Render transport timeline view
+    function renderTimeline() {
+      timelineList.innerHTML = '';
+      let totalCost = 0;
+      
+      segments.forEach((seg, index) => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        totalCost += parseFloat(seg.price || 0);
+
+        // Train schedule query link
+        const scheduleSearchUrl = seg.train_no 
+          ? `https://www.baidu.com/s?wd=${encodeURIComponent(seg.train_no + '时刻表')}` 
+          : 'https://kyfw.12306.cn/otn/leftTicket/init';
+
+        item.innerHTML = `
+          <div class="timeline-dot"></div>
+          <div class="timeline-card">
+            <div class="timeline-main">
+              <div class="train-badge">${seg.train_no || '火车'}</div>
+              <div>
+                <div class="station-flow">
+                  <span>${seg.from_st}</span>
+                  <i class="fa-solid fa-right-long" style="color: var(--primary); font-size: 0.8rem;"></i>
+                  <span>${seg.to_st}</span>
+                </div>
+                <div class="station-time">
+                  <i class="fa-solid fa-calendar-days"></i> ${seg.date || '未设日期'}
+                  <i class="fa-solid fa-clock" style="margin-left: 10px;"></i> ${seg.dep_time || '--:--'}
+                  ${seg.note ? ` | <span style="color: var(--primary);">${seg.note}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="timeline-meta">
+              <span class="price-tag">${seg.price ? `¥${seg.price}` : '免费'}</span>
+              <a href="${scheduleSearchUrl}" target="_blank" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
+                <i class="fa-solid fa-calendar-days"></i> 时刻表
+              </a>
+              <button class="btn-icon" onclick="startEditSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})" style="color: var(--primary);">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+              <button class="btn-icon" onclick="deleteSegment(${seg.id || index}, ${seg.id ? 'true' : 'false'})">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        timelineList.appendChild(item);
+      });
+
+      totalPriceEl.innerText = `¥${totalCost}`;
+    }
+
+    // Submit segment handler
+    async function handleAddSegment(e) {
+      e.preventDefault();
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
+      const from_st = document.getElementById('from-st').value.trim();
+      const to_st = document.getElementById('to-st').value.trim();
+      const date = document.getElementById('dep-date').value;
+      const dep_time = document.getElementById('dep-time').value;
+      const train_no = document.getElementById('train-no').value.trim().toUpperCase();
+      const price = parseFloat(document.getElementById('price').value) || 0;
+      const note = document.getElementById('note').value.trim();
+
+      const newSegment = {
+        from_st,
+        to_st,
+        date,
+        dep_time,
+        train_no,
+        price,
+        note,
+        trip_id: config.id
+      };
+
+      if (editingId !== null || editingIndex !== null) {
+        // Edit mode
+        if (editingId !== null) {
+          newSegment.id = editingId;
+          try {
+            const res = await fetch('/api/segments', {
+              method: 'PUT',
+              headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-password': pwd
+              },
+              body: JSON.stringify(newSegment)
+            });
+            if (res.status === 403) {
+              sessionStorage.removeItem('gdx_admin_password');
+              showToast('密码错误，修改失败！');
+              return;
+            }
+            if (!res.ok) throw new Error('API update failed');
+          } catch (err) {
+            console.error(err);
+          }
+        } else {
+          // Local edit
+          newSegment.sort_order = segments[editingIndex].sort_order;
+          segments[editingIndex] = newSegment;
+          localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
+        }
+        cancelEdit();
+      } else {
+        // Add mode
+        newSegment.sort_order = segments.length + 1;
+        try {
+          const res = await fetch('/api/segments', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-admin-password': pwd
+            },
+            body: JSON.stringify(newSegment)
+          });
+          if (res.status === 403) {
+            sessionStorage.removeItem('gdx_admin_password');
+            showToast('密码错误，添加失败！');
+            return;
+          }
+          if (!res.ok) throw new Error('API post failed');
+        } catch (err) {
+          console.warn('API post failed, saving to LocalStorage instead.');
+          segments.push(newSegment);
+          localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
+        }
+      }
+
+      transportForm.reset();
+      await loadSegments();
+      // Safe close
+      const wrapper = document.getElementById('transport-form-wrapper');
+      if (wrapper) wrapper.classList.remove('modal-active');
+    }
+
+    // Delete segment
+    async function deleteSegment(idOrIndex, isRemote) {
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
+      if (isRemote) {
+        try {
+          const res = await fetch(`/api/segments?id=${idOrIndex}`, { 
+            method: 'DELETE',
+            headers: { 'x-admin-password': pwd }
+          });
+          if (res.status === 403) {
+            sessionStorage.removeItem('gdx_admin_password');
+            showToast('密码错误，操作被拒绝！');
+            return;
+          }
+          if (!res.ok) throw new Error('API delete failed');
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        segments.splice(idOrIndex, 1);
+        localStorage.setItem(`gdx_segments_${config.id}`, JSON.stringify(segments));
+      }
+      await loadSegments();
+    }
+
+    // Start editing segment
+    function startEditSegment(idOrIndex, isRemote) {
+      let seg;
+      if (isRemote) {
+        seg = segments.find(s => s.id === idOrIndex);
+        editingId = idOrIndex;
+        editingIndex = null;
+      } else {
+        seg = segments[idOrIndex];
+        editingIndex = idOrIndex;
+        editingId = null;
+      }
+      
+      if (!seg) return;
+      
+      // Populate form
+      document.getElementById('from-st').value = seg.from_st;
+      document.getElementById('to-st').value = seg.to_st;
+      document.getElementById('dep-date').value = seg.date || '';
+      document.getElementById('dep-time').value = seg.dep_time || '';
+      document.getElementById('train-no').value = seg.train_no || '';
+      document.getElementById('price').value = seg.price || '';
+      document.getElementById('note').value = seg.note || '';
+      
+      // Change form display
+      const formCard = document.querySelector('.form-card');
+      formCard.querySelector('.form-title').innerHTML = `<i class="fa-solid fa-pencil"></i> 编辑车次`;
+      const submitBtn = formCard.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> 保存修改`;
+      
+      // Add a cancel button if not already present
+      if (!document.getElementById('btn-cancel-edit')) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.id = 'btn-cancel-edit';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.style.marginTop = '10px';
+        cancelBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> 取消编辑`;
+        cancelBtn.addEventListener('click', cancelEdit);
+        formCard.querySelector('form').appendChild(cancelBtn);
+      }
+      
+      openAddTransportModal();
+      
+      // Scroll to form on mobile
+      formCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Cancel editing
+    function cancelEdit() {
+      editingId = null;
+      editingIndex = null;
+      
+      const formCard = document.querySelector('.form-card');
+      formCard.querySelector('.form-title').innerHTML = `<i class="fa-solid fa-plus-circle"></i> 添加自定义车次`;
+      const submitBtn = formCard.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 添加行程`;
+      
+      const cancelBtn = document.getElementById('btn-cancel-edit');
+      if (cancelBtn) cancelBtn.remove();
+      
+      document.getElementById('transport-form').reset();
+      
+      // Close modal directly
+      const wrapper = document.getElementById('transport-form-wrapper');
+      if (wrapper) wrapper.classList.remove('modal-active');
+    }
+
+    function openAddTransportModal() {
+      const wrapper = document.getElementById('transport-form-wrapper');
+      if (wrapper) wrapper.classList.add('modal-active');
+    }
+
+    function closeAddTransportModal() {
+      const wrapper = document.getElementById('transport-form-wrapper');
+      if (wrapper && wrapper.classList.contains('modal-active')) {
+        wrapper.classList.remove('modal-active');
+        cancelEdit();
+      }
+    }
+
+    // Reset default DB content
+    async function resetDefaultSegments() {
+      if (!confirm('确定要重置回默认的行程吗？你的自定义添加将会被清空。')) return;
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      const config = getActiveTripConfig();
+      try {
+        // Clear remote
+        for (const seg of segments) {
+          if (seg.id) {
+            const res = await fetch(`/api/segments?id=${seg.id}`, { 
+              method: 'DELETE',
+              headers: { 'x-admin-password': pwd }
+            });
+            if (res.status === 403) {
+              sessionStorage.removeItem('gdx_admin_password');
+              showToast('密码错误，重置失败！');
+              return;
+            }
+          }
+        }
+        localStorage.removeItem(`gdx_segments_${config.id}`);
+      } catch (e) {
+        localStorage.removeItem(`gdx_segments_${config.id}`);
+      }
+      await loadSegments();
+      showToast('行程已成功重置为默认值！');
+    }
+
+    // Switch active trip and reload
+    function switchTrip(tripId) {
+      localStorage.setItem('gdx_current_trip_id', tripId);
+      window.location.reload();
+    }
+
+    // Clear all guides under active trip
+    async function clearAllGuides(category) {
+      const config = getActiveTripConfig();
+      if (!confirm(`确定要清空该行程的所有${category === 'eat' ? '美食' : '景点'}记录吗？`)) return;
+      const pwd = getAdminPassword();
+      if (!pwd) return;
+
+      try {
+        const res = await fetch(`/api/guides?clear=all&category=${category}&trip_id=${config.id}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': pwd }
+        });
+        if (res.status === 403) {
+          sessionStorage.removeItem('gdx_admin_password');
+          showToast('密码错误，操作被拒绝！');
+          return;
+        }
+        if (!res.ok) throw new Error('Clear request failed');
+        
+        // Sync locally
+        if (category === 'eat') EAT_DATA = [];
+        else PLAY_DATA = [];
+        localStorage.removeItem(`gdx_${category}_data_${config.id}`);
+        
+        if (category === 'eat') renderEatTab();
+        else renderPlayTab();
+        showToast('清空成功！');
+      } catch (e) {
+        showToast('清空失败: ' + e.message);
+      }
+    }
+
+    // Copy itinerary text helper
+    function copyItineraryText() {
+      let text = "🚄 联名自助行程交通规划概要：\n\n";
+      segments.forEach(seg => {
+        text += `${seg.date || '无日期'}  ${seg.from_st.padEnd(6, ' ')} -  ${seg.to_st.padEnd(6, ' ')}  ${seg.dep_time}  ${(seg.train_no || '火车').padEnd(7, ' ')}  ${seg.price}元`;
+        if (seg.note) text += ` (${seg.note})`;
+        text += "\n";
+      });
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(text).then(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2500);
+      });
+    }
         const res = await fetch('/api/segments');
         if (!res.ok) throw new Error('API fetch failed');
         const data = await res.json();

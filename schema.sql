@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS trip_segments (
   price     REAL,
   note      TEXT,
   sort_order INTEGER DEFAULT 0,
+  trip_id   TEXT DEFAULT 'qianmin',
   created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS booked_hotels (
   checkout    TEXT NOT NULL,
   address     TEXT NOT NULL,
   price       REAL NOT NULL,
+  trip_id     TEXT DEFAULT 'qianmin',
   created_at  TEXT DEFAULT (datetime('now'))
 );
 
@@ -33,5 +35,6 @@ CREATE TABLE IF NOT EXISTS guide_items (
   desc         TEXT NOT NULL,
   avoid        TEXT,
   is_special   INTEGER DEFAULT 0,
+  trip_id      TEXT DEFAULT 'qianmin',
   created_at   TEXT DEFAULT (datetime('now'))
 );
